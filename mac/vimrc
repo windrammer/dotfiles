@@ -1,0 +1,495 @@
+" Tollis vimrc based on Andreas 'dnw' Dilworth's vimrc for Vim8 / neovim
+"
+" Required packages (Debian):
+"	git
+" Optional packages: ack-grep, golang, exuberant-ctags, python3-pip,
+"   python3-jedi
+" Optional manual installation (as regular user - not root):
+"   pip3 install neovim
+"
+" Also requires a terminal that supports 256 colours and a font containing
+" powerline-glyphs (I use 'Hack' - https://sourcefoundry.org/hack/ ).
+
+" NOTE: If you're facing performance issues (busy-looping
+" python3/deoplete-processes after exit) - try resetting deoplete.vim to rev.
+" 2d7e8e367666aff4ae6bb11864ef7fe142b78ac0
+
+" Make sure we are in noncompatible mode (necessary for system vimrc).
+" This should be set first since it implicitly changes other settings.
+
+" Plugins not yet bootstrapped
+" ansible highlighting: git clone https://github.com/pearofducks/ansible-vim ~/.vim/bundle/ansible-vim
+" expand archive and run cp -r ftdetect ftplugin syntax  ~/.vim/
+
+set nocp
+
+set infercase		" Allow smarter completion by infering the case.
+set ignorecase		" Do case insensitive matching.
+set smartcase		" Do smart case matching.
+set incsearch		" Incremental search.
+set hlsearch		" Highlight search results.
+set hidden			" Hide buffers when they are abandoned.
+set showcmd			" Show (partial) command in status line.
+set history=100		" Allow a more generous command history.
+set autowrite		" Automatically save before commands like :next and :make.
+set encoding=utf8
+set showmatch		" Show matching brackets.
+" How many tenths of a second to blink when matching brackets.
+set mat=2
+set textwidth=0		" Do not autowrap code
+
+" TTY configuration
+set ttyfast			" improves smoothness on fast connections.
+set t_Co=256		" Force 256 colour-support.
+" Don't redraw while executing macros (good for performance).
+set lazyredraw
+
+" No annoying sounds or screen flashing.
+set noerrorbells
+set novisualbell
+set t_vb=
+set tm=500
+
+set wildmenu
+" Ignore compilation artifacts and source control data dirs.
+set wildignore=*.o,*~,*.pyc,.git\*,.hg\*,.svn\*,__pycache__\*
+" Set command line completion mode.
+set wildmode=list:longest,full
+
+set scrolloff=5
+
+" Enable <C-A>/<C-X> to work on octal and hex numbers as well as characters.
+set nrformats=octal,hex,alpha
+
+" Default indentation
+set tabstop=4 softtabstop=4 shiftwidth=4 noexpandtab
+" yaml indentation
+autocmd FileType yaml setlocal tabstop=2 softtabstop=2 shiftwidth=2 expandtab
+
+augroup au_open
+	autocmd!
+	" Have Vim jump to the last position when reopening a file.
+	autocmd BufReadPost * if line("'\"") > 1 && line("'\"") <= line('$') |
+		\ execute "normal! g'\"" | endif
+augroup end
+
+
+"------------------------------------------------------------------------------
+"  HELPER FUNCTIONS
+"------------------------------------------------------------------------------
+function! CmdLine(str)
+	execute 'menu Foo.Bar :' . a:str
+	emenu Foo.Bar
+	unmenu Foo
+endfunction
+
+function! VisualSelection(direction, extra_filter) range
+	let l:saved_reg = @"
+	execute 'normal! vgvy'
+
+	let l:pattern = escape(@", '\\/.*$^~[]')
+	let l:pattern = substitute(l:pattern, "\n$", '', '')
+
+	if a:direction == 'b'
+		execute 'normal ?' . l:pattern . '^M'
+	elseif a:direction == 'gv'
+		if !g:ack_installed
+			echoerr 'Please install ack-grep!'
+		else
+			call CmdLine('Ack "' . l:pattern . '" ')
+		endif
+	elseif a:direction == 'replace'
+		call CmdLine('%s/'. l:pattern . '/')
+	elseif a:direction == 'f'
+		execute 'normal /' . l:pattern . '^M'
+	endif
+
+	let @/ = l:pattern
+	let @" = l:saved_reg
+endfunction
+
+function! DeleteTrailingWS()
+	execute 'normal mz'
+	%s/\s\+$//ge
+	execute 'normal `z'
+endfunction
+
+function! AppInstalled(app)
+	call system(a:app . ' --version')
+	if v:shell_error != 127
+		return 1
+	endif
+	return 0
+endfunction
+
+" This is an (unfortunately slow) function for checking that a pip-package is
+" installed
+function! PipHas(package)
+	if !filereadable('/usr/bin/pip3')
+		return 0
+	endif
+	call system('/usr/bin/pip3 show ' . a:package . ' 2>/dev/null')
+	if v:shell_error == 0
+		return 1
+	endif
+	return 0
+endfunction
+
+
+"------------------------------------------------------------------------------
+"  KEYMAPPINGS
+"------------------------------------------------------------------------------
+" Increase timeout for waiting for commands following the leader key to 10s.
+set timeout timeoutlen=10000 ttimeoutlen=50
+
+" :W saves file using sudo.
+command! W w !sudo tee % > /dev/null
+
+" Easy way to open/reload vimrc.
+nmap <Leader>V :source $MYVIMRC<CR>
+nmap <Leader>v :vsp $MYVIMRC<CR>
+
+" Pressing * or # in visual mode searches for the current selection.
+vnoremap <silent> * :call VisualSelection('f', '')<CR>
+vnoremap <silent> # :call VisualSelection('b', '')<CR>
+
+
+" Buffer, tab and window navigation
+"------------------------------------------------------------------------------
+" Jump to first non-blank character.
+map 0 ^
+
+" Treat long lines as breaklines (useful when moving around in them).
+map j gj
+map k gk
+
+" Disable highlight when <leader><cr> is pressed.
+map <silent> <Leader><CR> :nohlsearch<CR>
+
+" Smart way to move between windows.
+map <C-j> <C-W>j
+map <C-k> <C-W>k
+map <C-h> <C-W>h
+map <C-l> <C-W>l
+
+" Close the current buffer (w/o closing the current window).
+map <Leader>bd :Bclose<CR>
+
+" Close all buffers.
+map <Leader>bda :1,1000 bd!<CR>
+
+" Useful mappings for managing tabs.
+map <Leader>tn :tabnew<CR>
+map <Leader>to :tabonly<CR>
+map <Leader>tc :tabclose<CR>
+map <Leader>tm :tabmove
+map <Leader>tj :tabnext
+map <Leader>tk :tabprevious
+
+" Let 'tl' toggle between this and the last accessed tab.
+let g:lasttab = 1
+nmap <Leader>tl :execute 'tabn ' . g:lasttab<CR>
+augroup au_navigation
+	autocmd!
+	autocmd TabLeave * let g:lasttab = tabpagenr()
+augroup end
+
+" Opens a new tab within the current buffers path.
+map <Leader>te :tabedit <C-r>=expand("%:p:h")<CR>/
+
+" Editing
+"------------------------------------------------------------------------------
+" Move a line of text using A+[jk] or Comamnd+[jk] on mac
+nmap <M-j> mz:m+<CR>`z
+nmap <M-k> mz:m-2<CR>`z
+vmap <M-j> :m'>+<CR>`<my`>mzgv`yo`z
+vmap <M-k> :m'<-2<CR>`>my`<mzgv`yo`z
+
+" Visual shifting (does not exit visual mode).
+vnoremap < <gv
+vnoremap > >gv
+
+" Remove the Windows ^M - for when the encodings gets messed up.
+noremap <Leader>m mmHmt:%s/<C-V><CR>//ge<CR>'tzt'm
+
+" Selection in visual mode.
+vnoremap <silent> gv :call VisualSelection('gv', '')<CR>
+" Search and replace the selected text.
+vnoremap <silent> <Leader>r :call VisualSelection('replace', '')<CR>
+
+" Display results in cope.
+map <Leader>cc :botright cope<CR>
+
+" Next/previous search result.
+map <Leader>n :cn<CR>
+map <Leader>p :cp<CR>
+
+map <Leader>co ggVGy:tabnew<CR>:set syntax=qf<CR>pgg
+
+
+"------------------------------------------------------------------------------
+"  INSTALL/LOAD PLUGINS (plugged)
+"------------------------------------------------------------------------------
+" Bootstrap vim-plug
+if has('nvim')
+	let plug_path = '~/.config/nvim/autoload/plug.vim'
+	let plug_plugin_path = '~/.local/share/nvim/plugged'
+else
+	let plug_path = '~/.vim/autoload/plug.vim'
+	let plug_plugin_path = '~/.vim/plugged'
+endif
+if !filereadable(expand(plug_path))
+	if !AppInstalled('curl')
+		echoerr 'Please install curl to bootstrap vim-plug'
+	else
+		silent execute '!curl -fLo ' . plug_path . ' --create-dirs ' .
+		\ 'https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim'
+		augroup au_plug
+			autocmd!
+			autocmd VimEnter * PlugInstall | source $MYVIMRC
+		augroup end
+	endif
+endif
+
+
+let ack_installed = AppInstalled('ack')
+let ctags_installed = AppInstalled('ctags')
+
+" PipHas()-checks commented because they significantly increase launch time..
+"let jedi_installed = PipHas('jedi')
+let jedi_installed = 1
+if has("python3") "&& PipHas('neovim')
+	let g:python3_host_prog = '/usr/bin/python3'
+	let en_deoplete = 1
+else
+	let en_deoplete = 0
+endif
+
+
+call plug#begin(plug_plugin_path)
+Plug 'rbgrouleff/bclose.vim'
+if ack_installed
+	Plug 'mileszs/ack.vim'
+endif
+Plug 'vim-syntastic/syntastic'
+Plug 'godlygeek/tabular'
+Plug 'scrooloose/nerdcommenter'
+Plug 'machakann/vim-highlightedyank'
+Plug 'davidhalter/jedi-vim'
+
+" vim-airline
+Plug 'vim-airline/vim-airline'
+Plug 'vim-airline/vim-airline-themes'
+if ctags_installed
+	Plug 'majutsushi/tagbar'
+endif
+
+" git stuff
+Plug 'tpope/vim-fugitive'
+Plug 'gregsexton/gitv', {'on': 'Gitv'}
+Plug 'airblade/vim-gitgutter'
+
+" NERDTree
+Plug 'scrooloose/nerdtree'
+Plug 'Xuyuanp/nerdtree-git-plugin'
+
+" Python stuff
+Plug 'anntzer/python-syntax-1'
+Plug 'plytophogy/vim-virtualenv'
+
+Plug 'rodjek/vim-puppet'
+Plug 'cespare/vim-toml'
+
+" Colour schemes
+"Plug 'w0ng/vim-hybrid' {'do': ':colorscheme hybrid'}
+Plug 'kristijanhusak/vim-hybrid-material',
+	\ {'do': ':colorscheme hybrid_material'}
+"Plug 'zacanger/angr.vim', {'do': ':colorscheme angr'}
+" This can help displaying some colour schemes designed for GUI in terminals.
+"Plug 'godlygeek/csapprox'
+
+" deoplete.nvim
+if en_deoplete
+	if has('nvim')
+		Plug 'Shougo/deoplete.nvim',
+			\ {'do': ':call SetupDeoplete(1)'}
+	else
+		Plug 'Shougo/deoplete.nvim', {'do': ':call SetupDeoplete(1)'}
+		Plug 'roxma/nvim-yarp'
+		Plug 'roxma/vim-hug-neovim-rpc'
+	endif
+	Plug 'Shougo/echodoc.vim'
+	Plug 'Shougo/neco-vim'
+	if jedi_installed
+		Plug 'zchee/deoplete-jedi'
+	endif
+endif
+
+" vim-easyclip
+Plug 'svermeulen/vim-easyclip'
+Plug 'tpope/vim-repeat' " required for vim-easyclip
+call plug#end()
+
+" ansible stuff
+Plug 'pearofducks/ansible-vim'
+
+
+"------------------------------------------------------------------------------
+"  PLUGIN CONFIGURATION
+"------------------------------------------------------------------------------
+if ack_installed
+	" ack (search plugin)
+	"--------------------------------------------------------------------------
+	" Open Ack and put the cursor in the right position.
+	map <Leader>a :Ack<Space>
+endif
+
+
+"  Airline
+"------------------------------------------------------------------------------
+let g:airline_powerline_fonts = 1
+let g:airline#extensions#tabline#enabled = 1
+
+" Don't show modestring on the command line (redundant).
+set noshowmode
+
+
+" Syntastic
+"------------------------------------------------------------------------------
+let g:syntastic_always_populate_loc_list = 1
+let g:syntastic_auto_loc_list = 1
+let g:syntastic_check_on_open = 1
+let g:syntastic_check_on_wq = 0
+
+let g:syntastic_python_checkers = ['flake8']
+
+" Avoid saving error window in sessions.
+set sessionoptions-=blank
+
+
+" NERDTree
+"------------------------------------------------------------------------------
+let g:NERDTreeRespectWildIgnore = 1
+let g:NERDTreeMouseMode = 2
+let g:NERDTreeNaturalSort = 1
+let g:NERDTreeMinimalUI = 1
+
+augroup au_NERDTree
+	autocmd!
+	" Automatically show NERDTree on startup.
+	autocmd VimEnter * NERDTree | wincmd p
+	" Close vim when only NERDTree is left open.
+	autocmd BufEnter * if (winnr('$') == 1 && exists('b:NERDTree') &&
+		\ b:NERDTree.isTabTree()) | q | endif
+augroup end
+" Toggle on F12
+map <F12> :NERDTreeToggle<CR>
+
+
+if en_deoplete
+	" deoplete
+	"--------------------------------------------------------------------------
+	let g:deoplete#enable_at_startup = 1
+	let g:deoplete#enable_refresh_always = 1
+
+	let g:echodoc#enable_at_startup = 1
+
+	" Tab to insert keyword.
+	inoremap <expr><Tab> pumvisible() ? "\<Enter>" : "\<Tab>"
+
+	function! SetupDeoplete(...)
+		let l:plug_update = a:0 >= 1 ? a:1 : 0
+		if l:plug_update
+			if g:go_installed
+				call system(g:plug_plugin_path.'/gocode/'.(has('nvim')?'n':'')
+					\ .'vim/symlink.sh')
+			endif
+			if has('nvim')
+				UpdateRemotePlugins
+				echoerr 'Sorry! In order to get deoplete working, you need to'
+					\ . ' restart neovim.'
+			endif
+		endif
+		call deoplete#custom#source('_', 'disabled_syntaxes',
+			\ ['Comment', 'String'])
+
+		call deoplete#custom#source('vim', 'rank', 9999)
+		if g:jedi_installed
+			call deoplete#custom#source('jedi', 'rank', 9999)
+		endif
+		if g:go_installed
+			call deoplete#custom#source('go', 'rank', 9999)
+		endif
+	endfunction
+	silent! call SetupDeoplete()
+
+	" Add "noinsert" if you want the first completion match to be pre-selected.
+	" Remove "preview" if you find the preview-window annoying.
+	set completeopt=longest,menuone,preview
+
+	" Avoid command window spam for better experience with echodoc.
+	set shortmess+=c
+
+	" Show docstrings in preview window during selection.
+	if jedi_installed
+		let g:deoplete#sources#jedi#show_docstring = 1
+	endif
+	augroup au_deoplete
+		autocmd!
+		" Close preview window upon completion.
+		autocmd CompleteDone * pclose!
+	augroup end
+endif
+
+
+" vim-easyclip
+"------------------------------------------------------------------------------
+" Don't change the default vim behavior of yanking on delete since that
+" will quickly result in ruining the vim muscle memory...
+let g:EasyClipEnableBlackHoleRedirect = 0
+let g:EasyClipUseCutDefaults = 0
+
+let g:EasyClipAlwaysMoveCursorToEndOfPaste = 1
+let g:EasyClipUseGlobalPasteToggle = 1
+" This is really cool but also slow -
+"  disable if you have performance problems.
+let g:EasyClipShareYanks = 1
+
+
+" vim-highlightedyank
+"------------------------------------------------------------------------------
+if !exists('##TextYankPost')
+	map y <Plug>(highlightedyank)
+	map Y <Plug>(highlightedyank)y
+endif
+
+" python-syntax-1
+"------------------------------------------------------------------------------
+" Enable all the bells and whistles
+let g:python_highlight_all = 1
+
+
+"------------------------------------------------------------------------------
+"  COSMETICS
+"------------------------------------------------------------------------------
+set background=dark
+silent! colorscheme hybrid_material
+let g:airline_theme = 'angr' "'hybrid'
+
+" Add vertical lines on columns.
+set colorcolumn=80,120
+" Highlight current line - allows you to track cursor position more easily.
+" set cursorline
+" Show line numbers in the sign column.
+set number
+
+" Highlight trailing spaces.
+highlight TrailingWhitespace ctermbg=red guibg=red
+match TrailingWhitespace /\s\+$/
+augroup au_highlight
+	autocmd!
+	autocmd BufWinEnter * match TrailingWhitespace /\s\+$/
+	autocmd InsertEnter * match TrailingWhitespace /\s\+\%#\@<!$/
+	autocmd InsertLeave * match TrailingWhitespace /\s\+$/
+	autocmd BufWinLeave * call clearmatches()
+augroup end

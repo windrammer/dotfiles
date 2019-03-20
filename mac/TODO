@@ -1,0 +1,6 @@
+add ansible for terraform_landscape
+add git alias git config --global alias.fucked 'reset --hard HEAD'
+add ansible for installation of bat
+add ansible installation of tmux
+https://github.com/clvv/oh-my-zsh/tree/master/modules/tmux
+

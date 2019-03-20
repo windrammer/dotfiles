@@ -1,0 +1,10 @@
+---
+- hosts: localhost
+  become: no
+
+  tasks:
+  - name: run vimrc script
+    shell: /Users/david.tollman/dotfiles/mac/link.sh
+
+  - name: Ensure zsh is standard shell
+    shell: dscl . -read /Users/$USER UserShell
