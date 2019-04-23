@@ -55,7 +55,7 @@ export SAVEHIST=10000
 # users are encouraged to define aliases within the ZSH_CUSTOM folder.
 # For a full list of active aliases, run `alias`.
 #
-alias history='history 1 | less +G'
+alias history='history -i 1 | less +G'
 alias landscape='tee /tmp/landscape && cat /tmp/landscape| landscape'
 
 source ~/git/infra-automation/setup-environment.zsh
