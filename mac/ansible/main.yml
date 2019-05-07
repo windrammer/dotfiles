@@ -23,3 +23,8 @@
     homebrew_cask:
       name: bat
       state: present
+
+  - name: install tmux
+    homebrew_cask:
+      name: tmux
+      state: present
