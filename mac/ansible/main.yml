@@ -18,3 +18,8 @@
     homebrew_cask:
       name: spectacle
       state: present
+
+  - name: install bat
+    homebrew_cask:
+      name: bat
+      state: present
