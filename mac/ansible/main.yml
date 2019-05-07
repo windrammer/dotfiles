@@ -13,3 +13,8 @@
     git_config:
       name: alias.fucked
       value: reset --hard HEAD
+
+  - name: install spectacle
+    homebrew_cask:
+      name: spectacle
+      state: present
