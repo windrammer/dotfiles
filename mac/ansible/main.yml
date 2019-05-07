@@ -8,3 +8,8 @@
 
   - name: Ensure zsh is standard shell
     shell: dscl . -read /Users/$USER UserShell
+
+  - name: set git fucked alias
+    git_config:
+      name: alias.fucked
+      value: reset --hard HEAD
