@@ -1,2 +1,4 @@
 mac/oldfiles/*
 !mac/oldfiles/placeholder
+*.retry
+*.swp
