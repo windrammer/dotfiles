@@ -153,6 +153,9 @@ nmap <Leader>v :vsp $MYVIMRC<CR>
 vnoremap <silent> * :call VisualSelection('f', '')<CR>
 vnoremap <silent> # :call VisualSelection('b', '')<CR>
 
+" Remove trailing whitespace with f5
+nnoremap <F5> :let _s=@/<Bar>:%s/\s\+$//e<Bar>:let @/=_s<Bar><CR>
+map <F6> :%s;^\(\s\+\);\=repeat(' ', len(submatch(0))/2);g<CR>
 
 " Buffer, tab and window navigation
 "------------------------------------------------------------------------------
