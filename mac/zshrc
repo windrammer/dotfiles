@@ -58,4 +58,7 @@ export SAVEHIST=10000
 alias history='history -i 1 | less +G'
 alias landscape='tee /tmp/landscape && cat /tmp/landscape| landscape'
 
+alias k='kubectl'
+
 source ~/git/infra-automation/setup-environment.zsh
+
