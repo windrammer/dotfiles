@@ -6,5 +6,5 @@ add fetch of iterm2 profile
 Add installation of https://github.com/weaveworks/eksctl
 add installation of https://ahmet.im/blog/kubectx/
 add installation of kubectl
-
+add alias k='kubectl'
 
