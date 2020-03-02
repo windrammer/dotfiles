@@ -7,5 +7,9 @@ Add installation of https://github.com/weaveworks/eksctl
 add installation of https://ahmet.im/blog/kubectx/
 add installation of kubectl
 https://github.com/itspriddle/vim-shellcheck
-
+add installation of oh-my-zsh
+add installation ofc zsh-autosuggestions and zsh-syntax-highlighting
+add installation of hack font
+add installation of brew
+add variables to scripts for user
 

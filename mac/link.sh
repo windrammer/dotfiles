@@ -5,20 +5,20 @@ here=$(pwd)
 # mv ~/.vimrc $here/oldfiles/vimrc-$DATE
 # ln -s $here/vimrc ~/.vimrc
 
-mv ~/.vimrc /Users/david.tollman/dotfiles/mac/oldfiles/vimrc-$DATE
-ln -s /Users/david.tollman/dotfiles/mac/vimrc ~/.vimrc
+mv ~/.vimrc /Users/davtol/git/dotfiles/mac/oldfiles/vimrc-$DATE
+ln -s /Users/davtol/git/dotfiles/mac/vimrc ~/.vimrc
 
 # rm ~/.oh-my-zsh/themes/agnoster.zsh-theme
 # ln -s $here/agnoster.zsh-theme ~/.oh-my-zsh/themes/agnoster.zsh-theme
 
 rm ~/.oh-my-zsh/themes/agnoster.zsh-theme
-ln -s /Users/david.tollman/dotfiles/mac/agnoster.zsh-theme ~/.oh-my-zsh/themes/agnoster.zsh-theme
+ln -s /Users/davtol/git/dotfiles/mac/agnoster.zsh-theme ~/.oh-my-zsh/themes/agnoster.zsh-theme
 
 # rm ~/.zshrc
 # ln -s $here/zshrc ~/.zshrc
 
 rm ~/.zshrc
-ln -s /Users/david.tollman/dotfiles/mac/zshrc ~/.zshrc
+ln -s /Users/davtol/git/dotfiles/mac/zshrc ~/.zshrc
 
 # touch ~/.Xmodmap
 # echo 'clear Lock' >> ~/.Xmodmap

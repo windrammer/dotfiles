@@ -2,12 +2,10 @@
 export PATH=$HOME/.bin:/usr/local/bin:$PATH
 
 # Path to your oh-my-zsh installation.
-export ZSH="/Users/david.tollman/.oh-my-zsh"
+export ZSH="/Users/davtol/.oh-my-zsh"
 
 
 #PATH="/usr/local/opt/coreutils/libexec/gnubin:$PATH"
-
-source ~/.zsh/zsh-autosuggestions/zsh-autosuggestions.zsh
 
 # Set name of the theme to load --- if set to "random", it will
 # load a random theme each time oh-my-zsh is loaded
@@ -60,5 +58,4 @@ alias landscape='tee /tmp/landscape && cat /tmp/landscape| landscape'
 
 alias k='kubectl'
 
-source ~/git/infra-automation/setup-environment.zsh
 
