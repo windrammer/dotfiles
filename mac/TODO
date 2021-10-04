@@ -8,4 +8,7 @@ add installation of hack font
 add installation of brew
 add variables to scripts for user
 add gitconfig
+git config name
+git config mail
+git config pull.rebase false
 
