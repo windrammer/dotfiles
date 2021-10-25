@@ -72,3 +72,8 @@
     homebrew:
       name: jq
       state: present
+      
+  - name: install kustomize
+    homebrew:
+      name: kustomize
+      state: present
