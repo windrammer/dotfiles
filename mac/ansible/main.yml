@@ -77,3 +77,8 @@
     homebrew:
       name: kustomize
       state: present
+
+  - name: install yq
+    homebrew:
+      name: yq
+      state: present
