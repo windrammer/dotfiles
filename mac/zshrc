@@ -58,5 +58,6 @@ alias history='history -i 1 | less +G'
 alias landscape='tee /tmp/landscape && cat /tmp/landscape| landscape'
 
 alias k='kubectl'
+source <(kubectl completion zsh)
 
 
