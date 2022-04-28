@@ -32,6 +32,9 @@ plugins=(
 )
 
 source $ZSH/oh-my-zsh.sh
+source <(kubectl completion zsh)
+source "/usr/local/opt/kube-ps1/share/kube-ps1.sh"
+export PS1='$(kube_ps1)'$PS1
 
 # Do not share history between sessions
 setopt noincappendhistory
@@ -58,6 +61,5 @@ alias history='history -i 1 | less +G'
 alias landscape='tee /tmp/landscape && cat /tmp/landscape| landscape'
 
 alias k='kubectl'
-source <(kubectl completion zsh)
-
+alias i='istioctl'
 
