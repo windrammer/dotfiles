@@ -4,7 +4,7 @@ add fetch of iterm2 profile
 https://github.com/itspriddle/vim-shellcheck
 add installation of oh-my-zsh
 add installation ofc zsh-autosuggestions and zsh-syntax-highlighting
-add installation of hack font
+add installation of meslolgs font # https://github.com/romkatv/powerlevel10k#manual-font-installation
 add installation of brew
 add variables to scripts for user
 add gitconfig
