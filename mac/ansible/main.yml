@@ -72,12 +72,12 @@
     homebrew:
       name: helm
       state: present
-      
+
   - name: install jq
     homebrew:
       name: jq
       state: present
-      
+
   - name: install kustomize
     homebrew:
       name: kustomize
@@ -86,4 +86,9 @@
   - name: install yq
     homebrew:
       name: yq
+      state: present
+
+  - name: install commitizen
+    homebrew:
+      name: commitizen
       state: present
