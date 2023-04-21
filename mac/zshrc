@@ -12,6 +12,10 @@ export PATH="/Users/davtol/Library/Python/3.8/bin:$PATH"
 # Path to your oh-my-zsh installation.
 export ZSH="/Users/davtol/.oh-my-zsh"
 
+eval "$(/opt/homebrew/bin/brew shellenv)"
+
+# Adams aws profile switcher
+awp() { awp_run $@; . /tmp/aws_profile; }
 
 #PATH="/usr/local/opt/coreutils/libexec/gnubin:$PATH"
 
@@ -37,6 +41,7 @@ plugins=(
   docker
   zsh-autosuggestions
   zsh-syntax-highlighting
+  fzf
 )
 
 source $ZSH/oh-my-zsh.sh
