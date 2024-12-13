@@ -38,7 +38,6 @@ source ~/powerlevel10k/powerlevel10k.zsh-theme
 # Add wisely, as too many plugins slow down shell startup.
 plugins=(
   git
-  docker
   zsh-autosuggestions
   zsh-syntax-highlighting
   fzf
@@ -76,8 +75,15 @@ alias landscape='tee /tmp/landscape && cat /tmp/landscape| landscape'
 
 alias k='kubectl'
 alias i='istioctl'
+alias lgit='lazygit'
+alias docker='podman'
+alias k9s='k9s -A'
+alias zed="/Applications/Zed.app/Contents/MacOS/cli"
 
 # source ~/powerlevel10k/powerlevel10k.zsh-theme
 
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
+
+# Krew is a special baby
+export PATH="${KREW_ROOT:-$HOME/.krew}/bin:$PATH"
