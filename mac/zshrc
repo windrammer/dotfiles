@@ -79,6 +79,7 @@ alias lgit='lazygit'
 alias docker='podman'
 alias k9s='k9s -A'
 alias zed="/Applications/Zed.app/Contents/MacOS/cli"
+alias docker="podman"
 
 # source ~/powerlevel10k/powerlevel10k.zsh-theme
 
