@@ -73,7 +73,8 @@ export SAVEHIST=10000
 alias history='history -i 1 | less +G'
 alias landscape='tee /tmp/landscape && cat /tmp/landscape| landscape'
 
-alias k='kubectl'
+alias k='kubecolor'
+alias kubectl='kubecolor'
 alias i='istioctl'
 alias lgit='lazygit'
 alias docker='podman'
