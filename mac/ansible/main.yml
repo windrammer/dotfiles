@@ -6,22 +6,35 @@
   become: no
 
   tasks:
+  # - name: check if brew is installed
+
+  # - name: install brew if not installed
+  # /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+
+  # - name: install stuff from brewfile
+
+  # - name: check if oh-my-zsh is installed
+
+  # - name: install oh-my-zsh if not installed
+  # sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+
   - name: run link script
     shell: /Users/david.tollman/dotfiles/mac/./link.sh
 
   - name: ensure zsh is standard shell
     shell: dscl . -read /Users/$USER UserShell
 
-  - name: Check if .oh-my-zsh exists
-    stat:
-      path: ~/.oh-my-zsh
-    register: stat_oh_my_zsh_result
+  #  Can be removed when new oh my zsh stuff is implemented but kept around for posterity
+  # - name: Check if .oh-my-zsh exists
+  #   stat:
+  #     path: ~/.oh-my-zsh
+  #   register: stat_oh_my_zsh_result
 
-  - name: cloning oh-my-zsh
-    git:
-      repo=https://github.com/robbyrussell/oh-my-zsh
-      dest=~/.oh-my-zsh
-    when: not stat_oh_my_zsh_result.stat.exists
+  # - name: cloning oh-my-zsh
+  #   git:
+  #     repo=https://github.com/robbyrussell/oh-my-zsh
+  #     dest=~/.oh-my-zsh
+  #   when: not stat_oh_my_zsh_result.stat.exists
 
   - name: cloning zsh-autosuggestions
     git:
@@ -38,56 +51,66 @@
       repo=https://github.com/romkatv/powerlevel10k.git
       dest=~/powerlevel10k
 
-  - name: set git fucked alias
-    git_config:
-      name: alias.fucked
-      value: reset --hard HEAD
+  # - name: set git fucked alias
+  #   git_config:
+  #     name: alias.fucked
+  #     value: reset --hard HEAD
 
+  # Remove after brewfile install is fixed
   - name: install rectangle
     homebrew:
       name: rectangle
       state: present
 
+  # Remove after brewfile install is fixed
   - name: install bat
     homebrew:
       name: bat
       state: present
 
+  # no idea here, investigate
   - name: install terraform
     homebrew:
       name: terraform
       state: present
 
+  # Remove after brewfile install is fixed
   - name: install kubectl
     homebrew:
       name: kubectl
       state: present
 
+  # Remove after brewfile install is fixed
   - name: install kubectx
     homebrew:
       name: kubectx
       state: present
 
+  # Remove after brewfile install is fixed
   - name: install helm
     homebrew:
       name: helm
       state: present
 
+  # Remove after brewfile install is fixed
   - name: install jq
     homebrew:
       name: jq
       state: present
 
+  # Remove after brewfile install is fixed
   - name: install kustomize
     homebrew:
       name: kustomize
       state: present
 
+  # Remove after brewfile install is fixed
   - name: install yq
     homebrew:
       name: yq
       state: present
 
+  # Remove after brewfile install is fixed
   - name: install commitizen
     homebrew:
       name: commitizen

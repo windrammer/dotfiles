@@ -11,4 +11,6 @@ add gitconfig
 git config name
 git config mail
 git config pull.rebase false
+add rectangle conf to link script https://github.com/rxhanson/Rectangle?tab=readme-ov-file#import--export-json-config
 
+inspo for sep https://gist.github.com/mrlesmithjr/f3c15fdd53020a71f55c2032b8be2eda
