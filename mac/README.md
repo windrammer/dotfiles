@@ -1,6 +1,6 @@
 # Check user path in link script and run the ansible playbook
 
-
+If autocomplete is not showing up, adjust black bright colour
 
 ansible path
 export PATH="/Users/shantanu/Library/Python/3.9/bin:$PATH"
