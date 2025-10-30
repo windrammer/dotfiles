@@ -1,4 +1,6 @@
-# Just run the ansible playbook
+# Check user path in link script and run the ansible playbook
+
+
 
 ansible path
 export PATH="/Users/shantanu/Library/Python/3.9/bin:$PATH"
