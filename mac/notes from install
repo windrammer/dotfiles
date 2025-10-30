@@ -1,0 +1,8 @@
+Update userpath
+2025-10-30 21:27  vim link.sh
+
+Could probably be solved by updating playbook to include install of stuff from brewfile
+2025-10-30 21:27  brew install fzf
+
+Update userpath
+2025-10-30 21:27  vim .zshrc
