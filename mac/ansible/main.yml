@@ -5,18 +5,30 @@
   ignore_errors: yes
   become: no
 
-  tasks:
-  # - name: check if brew is installed
+  pre_tasks:
+    - name: Check if homebrew is installed
+      stat:
+        path: /opt/homebrew/bin/brew
+      register: homebrew_check
 
-  # - name: install brew if not installed
-  # /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+    - name: Install homebrew
+      shell: /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+      when:
+        - not homebrew_check.stat.exists
+
+    - name: Check if oh-my-zsh is installed
+      stat:
+        path: ~/.oh-my-zsh
+      register: oh-my-zsh_check
+
+    - name: Install oh-my-zsh
+      shell: sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+      when:
+        - not oh-my-zsh_check.stat.exists
+
+  tasks:
 
   # - name: install stuff from brewfile
-
-  # - name: check if oh-my-zsh is installed
-
-  # - name: install oh-my-zsh if not installed
-  # sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
 
   - name: run link script
     shell: /Users/david.tollman/dotfiles/mac/./link.sh
