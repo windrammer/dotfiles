@@ -6,6 +6,7 @@ add installation of oh-my-zsh
 add installation ofc zsh-autosuggestions and zsh-syntax-highlighting
 add installation of meslolgs font # https://github.com/romkatv/powerlevel10k#manual-font-installation
 add installation of brew
+add installation of kubecolor
 add variables to scripts for user
 add gitconfig
 git config name
