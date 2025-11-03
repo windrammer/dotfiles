@@ -89,3 +89,6 @@ alias docker="podman"
 
 # Krew is a special baby
 export PATH="${KREW_ROOT:-$HOME/.krew}/bin:$PATH"
+
+# Used for customer separation using direnv
+eval "$(direnv hook zsh)"
