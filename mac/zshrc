@@ -91,4 +91,8 @@ alias docker="podman"
 export PATH="${KREW_ROOT:-$HOME/.krew}/bin:$PATH"
 
 # Used for customer separation using direnv
-eval "$(direnv hook zsh)"
+# eval "$(direnv hook zsh)"
+export GPG_TTY=$(tty)
+export SSH_AUTH_SOCK=$(gpgconf --list-dirs agent-ssh-socket)
+gpgconf --launch gpg-agent
+gpg-connect-agent updatestartuptty /bye > /dev/null
