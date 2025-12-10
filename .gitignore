@@ -2,3 +2,4 @@ mac/oldfiles/*
 !mac/oldfiles/placeholder
 *.retry
 *.swp
+.DS_Store
