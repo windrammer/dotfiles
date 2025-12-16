@@ -80,7 +80,12 @@ alias lgit='lazygit'
 alias docker='podman'
 alias k9s='k9s -A'
 alias zed="/Applications/Zed.app/Contents/MacOS/cli"
-alias docker="podman"
+
+
+# trufflehog-exclude() { echo "^$1$" >> ~/.trufflehog-global-ignore && echo "Excluded $1 globally for Trufflehog"; }
+
+trufflehog-exclude() { fp="$(cd "$(dirname "$1")" && pwd)/$(basename "$1")"; echo "^$fp$" >> ~/.trufflehog-global-ignore && echo "Excluded $fp globally for Trufflehog"; }
+
 
 # source ~/powerlevel10k/powerlevel10k.zsh-theme
 
