@@ -11,9 +11,6 @@ ln -s /Users/$USER/git/dotfiles/mac/vimrc ~/.vimrc
 # rm ~/.oh-my-zsh/themes/agnoster.zsh-theme
 # ln -s $here/agnoster.zsh-theme ~/.oh-my-zsh/themes/agnoster.zsh-theme
 
-rm ~/.oh-my-zsh/themes/agnoster.zsh-theme
-ln -s /Users/$USER/git/dotfiles/mac/agnoster.zsh-theme ~/.oh-my-zsh/themes/agnoster.zsh-theme
-
 rm ~/Brewfile
 ln -s /Users/$USER/git/dotfiles/mac/Brewfile ~/Brewfile
 
