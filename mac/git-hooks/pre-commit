@@ -1,0 +1,2 @@
+#!/bin/bash
+trufflehog filesystem . --exclude-paths=$HOME/.trufflehog-global-ignore --no-verification --fail

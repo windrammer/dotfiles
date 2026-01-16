@@ -19,22 +19,36 @@
     - name: Check if oh-my-zsh is installed
       stat:
         path: ~/.oh-my-zsh
-      register: oh-my-zsh_check
+      register: oh_my_zsh_check
 
     - name: Install oh-my-zsh
       shell: sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
       when:
-        - not oh-my-zsh_check.stat.exists
+        - not oh_my_zsh_check.stat.exists
 
   tasks:
 
-  # - name: install stuff from brewfile
+  - name: ensure trufflehog global ignore file exists
+    copy:
+      content: |
+        ^\.git(/|$)
+      dest: ~/.trufflehog-global-ignore
+      force: no
+
+  - name: install stuff from brewfile
+    shell: brew bundle --file={{ ansible_env.HOME }}/Brewfile
 
   - name: run link script
-    shell: /Users/david.tollman/dotfiles/mac/./link.sh
+    shell: "{{ ansible_env.HOME }}/git/dotfiles/mac/link.sh"
 
-  - name: ensure zsh is standard shell
+  - name: check current shell
     shell: dscl . -read /Users/$USER UserShell
+    register: user_shell
+    changed_when: false
+
+  - name: set zsh as default shell
+    shell: chsh -s /bin/zsh
+    when: '"/bin/zsh" not in user_shell.stdout'
 
   #  Can be removed when new oh my zsh stuff is implemented but kept around for posterity
   # - name: Check if .oh-my-zsh exists
@@ -62,6 +76,32 @@
     git:
       repo=https://github.com/romkatv/powerlevel10k.git
       dest=~/powerlevel10k
+
+  - name: download MesloLGS NF Regular font
+    get_url:
+      url: https://github.com/romkatv/powerlevel10k-media/raw/master/MesloLGS%20NF%20Regular.ttf
+      dest: ~/Library/Fonts/MesloLGS NF Regular.ttf
+
+  - name: download MesloLGS NF Bold font
+    get_url:
+      url: https://github.com/romkatv/powerlevel10k-media/raw/master/MesloLGS%20NF%20Bold.ttf
+      dest: ~/Library/Fonts/MesloLGS NF Bold.ttf
+
+  - name: download MesloLGS NF Italic font
+    get_url:
+      url: https://github.com/romkatv/powerlevel10k-media/raw/master/MesloLGS%20NF%20Italic.ttf
+      dest: ~/Library/Fonts/MesloLGS NF Italic.ttf
+
+  - name: download MesloLGS NF Bold Italic font
+    get_url:
+      url: https://github.com/romkatv/powerlevel10k-media/raw/master/MesloLGS%20NF%20Bold%20Italic.ttf
+      dest: ~/Library/Fonts/MesloLGS NF Bold Italic.ttf
+
+  - name: configure git to use local hooks directory
+    git_config:
+      name: core.hooksPath
+      value: ~/.git-hooks
+      scope: global
 
   # - name: set git fucked alias
   #   git_config:
