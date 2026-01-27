@@ -1,0 +1,33 @@
+#!/usr/bin/env sh
+
+# Commit Guard - Conventional commit validation with wip bypass
+# Validates commit messages using commitlint
+
+# Skip validation for wip: commits (fast path, no Node needed)
+if grep -qE '^wip:' "$1"; then
+  echo "⏭️  Skipping validation for wip commit"
+  exit 0
+fi
+
+# Run commitlint
+# Looks for config in: repo root, then home directory
+if command -v npx >/dev/null 2>&1; then
+  if ! npx --no -- commitlint --edit "$1"; then
+    echo ""
+    echo "❌ Commit message validation failed!"
+    echo ""
+    echo "Expected format: type(scope): subject"
+    echo "Examples: feat: add new feature"
+    echo "          fix(auth): resolve login bug"
+    echo ""
+    echo "Valid types: feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert, wip"
+    echo ""
+    echo "💡 To fix: git commit --amend"
+    echo "💡 To bypass: prefix message with 'wip:'"
+    echo ""
+    exit 1
+  fi
+else
+  echo "⚠️  npx not found, skipping commitlint validation"
+  exit 0
+fi

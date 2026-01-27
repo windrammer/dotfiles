@@ -20,6 +20,11 @@ ln -sf "$DOTFILES_DIR/zshrc" ~/.zshrc
 # Link git hooks
 mkdir -p ~/.git-hooks
 ln -sf "$DOTFILES_DIR/git-hooks/pre-commit" ~/.git-hooks/pre-commit
+ln -sf "$DOTFILES_DIR/git-hooks/commit-msg" ~/.git-hooks/commit-msg
+chmod +x ~/.git-hooks/pre-commit ~/.git-hooks/commit-msg
+
+# Link commitlint config
+ln -sf "$DOTFILES_DIR/commitlint.config.js" ~/commitlint.config.js
 
 # Link Rectangle config
 ln -sf "$DOTFILES_DIR/rectangle-config.json" ~/Library/Preferences/com.knollsoft.Rectangle.plist

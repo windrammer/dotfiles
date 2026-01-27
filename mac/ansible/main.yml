@@ -15,6 +15,15 @@
       when:
         - not homebrew_check.stat.exists
 
+    - name: check current shell
+      shell: dscl . -read /Users/$USER UserShell
+      register: user_shell
+      changed_when: false
+
+    - name: set zsh as default shell
+      shell: chsh -s /bin/zsh
+      when: '"/bin/zsh" not in user_shell.stdout'
+
     - name: Check if oh-my-zsh is installed
       stat:
         path: ~/.oh-my-zsh
@@ -38,29 +47,9 @@
     shell: brew bundle --file={{ ansible_facts['env']['HOME'] }}/Brewfile --no-upgrade
     ignore_errors: yes
 
-  - name: run link script
-    shell: "{{ ansible_facts['env']['HOME'] }}/git/dotfiles/mac/link.sh"
-
-  - name: check current shell
-    shell: dscl . -read /Users/$USER UserShell
-    register: user_shell
-    changed_when: false
-
-  - name: set zsh as default shell
-    shell: chsh -s /bin/zsh
-    when: '"/bin/zsh" not in user_shell.stdout'
-
-  #  Can be removed when new oh my zsh stuff is implemented but kept around for posterity
-  # - name: Check if .oh-my-zsh exists
-  #   stat:
-  #     path: ~/.oh-my-zsh
-  #   register: stat_oh_my_zsh_result
-
-  # - name: cloning oh-my-zsh
-  #   git:
-  #     repo=https://github.com/robbyrussell/oh-my-zsh
-  #     dest=~/.oh-my-zsh
-  #   when: not stat_oh_my_zsh_result.stat.exists
+  - name: install commitlint dependencies globally
+    shell: npm install -g @commitlint/cli @commitlint/config-conventional
+    ignore_errors: yes
 
   - name: cloning zsh-autosuggestions
     git:
@@ -70,7 +59,7 @@
   - name: cloning zsh-syntax-highlighting
     git:
       repo=https://github.com/zsh-users/zsh-syntax-highlighting
-      dest=~/.oh-my-zsh/custom//plugins/zsh-syntax-highlighting
+      dest=~/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting
 
   - name: cloning p10k
     git:
@@ -103,70 +92,8 @@
       value: ~/.git-hooks
       scope: global
 
-  # - name: set git fucked alias
-  #   git_config:
-  #     name: alias.fucked
-  #     value: reset --hard HEAD
-
-  # Remove after brewfile install is fixed
-  - name: install rectangle
-    homebrew:
-      name: rectangle
-      state: present
-
-  # Remove after brewfile install is fixed
-  - name: install bat
-    homebrew:
-      name: bat
-      state: present
-
-  # no idea here, investigate
-  - name: install terraform
-    homebrew:
-      name: terraform
-      state: present
-
-  # Remove after brewfile install is fixed
-  - name: install kubectl
-    homebrew:
-      name: kubectl
-      state: present
-
-  # Remove after brewfile install is fixed
-  - name: install kubectx
-    homebrew:
-      name: kubectx
-      state: present
-
-  # Remove after brewfile install is fixed
-  - name: install helm
-    homebrew:
-      name: helm
-      state: present
-
-  # Remove after brewfile install is fixed
-  - name: install jq
-    homebrew:
-      name: jq
-      state: present
-
-  # Remove after brewfile install is fixed
-  - name: install kustomize
-    homebrew:
-      name: kustomize
-      state: present
-
-  # Remove after brewfile install is fixed
-  - name: install yq
-    homebrew:
-      name: yq
-      state: present
-
-  # Remove after brewfile install is fixed
-  - name: install commitizen
-    homebrew:
-      name: commitizen
-      state: present
+  - name: run link script
+    shell: "{{ ansible_facts['env']['HOME'] }}/git/dotfiles/mac/link.sh"
 
   - name: playbook complete
     debug:
