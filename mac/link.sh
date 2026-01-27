@@ -1,39 +1,25 @@
-#/usr/bin/bash
+#!/bin/zsh
 DATE=$(date +"%Y%m%d%H%M")
-here=$(pwd)
+DOTFILES_DIR="$HOME/git/dotfiles/mac"
 
-# mv ~/.vimrc $here/oldfiles/vimrc-$DATE
-# ln -s $here/vimrc ~/.vimrc
+# Backup and link vimrc
+if [ -f ~/.vimrc ] && [ ! -L ~/.vimrc ]; then
+  mv ~/.vimrc "$DOTFILES_DIR/oldfiles/vimrc-$DATE"
+fi
+ln -sf "$DOTFILES_DIR/vimrc" ~/.vimrc
 
-mv ~/.vimrc /Users/$USER/git/dotfiles/mac/oldfiles/vimrc-$DATE
-ln -s /Users/$USER/git/dotfiles/mac/vimrc ~/.vimrc
+# Link Brewfile
+ln -sf "$DOTFILES_DIR/Brewfile" ~/Brewfile
 
-# rm ~/.oh-my-zsh/themes/agnoster.zsh-theme
-# ln -s $here/agnoster.zsh-theme ~/.oh-my-zsh/themes/agnoster.zsh-theme
+# Link p10k config
+ln -sf "$DOTFILES_DIR/p10k.zsh" ~/.p10k.zsh
 
-rm ~/Brewfile
-ln -s /Users/$USER/git/dotfiles/mac/Brewfile ~/Brewfile
+# Link zshrc
+ln -sf "$DOTFILES_DIR/zshrc" ~/.zshrc
 
-rm ~/.p10k.zsh
-ln -s /Users/$USER/git/dotfiles/mac/p10k.zsh ~/.p10k.zsh
-# rm ~/.zshrc
-# ln -s $here/zshrc ~/.zshrc
-
-rm ~/.zshrc
-ln -s /Users/$USER/git/dotfiles/mac/zshrc ~/.zshrc
-
+# Link git hooks
 mkdir -p ~/.git-hooks
-rm -f ~/.git-hooks/pre-commit
-ln -s /Users/$USER/git/dotfiles/mac/git-hooks/pre-commit ~/.git-hooks/pre-commit
+ln -sf "$DOTFILES_DIR/git-hooks/pre-commit" ~/.git-hooks/pre-commit
 
-rm -f ~/Library/Preferences/com.googlecode.iterm2.plist
-ln -s /Users/$USER/git/dotfiles/mac/iterm2-profile.plist ~/Library/Preferences/com.googlecode.iterm2.plist
-
-rm ~/Library/Preferences/com.knollsoft.Rectangle.plist
-ln -s /Users/$USER/git/dotfiles/mac/rectangle-config.json ~/Library/Preferences/com.knollsoft.Rectangle.plist
-
-# touch ~/.Xmodmap
-# echo 'clear Lock' >> ~/.Xmodmap
-# echo 'keycode 66 = Escape NoSymbol Escape' >> ~/.Xmodmap
-
-# xmodmap ~/.Xmodmap
+# Link Rectangle config
+ln -sf "$DOTFILES_DIR/rectangle-config.json" ~/Library/Preferences/com.knollsoft.Rectangle.plist

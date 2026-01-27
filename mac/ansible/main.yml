@@ -2,7 +2,6 @@
 - name: run playbook on localhost
   hosts: 127.0.0.1
   connection: local
-  ignore_errors: yes
   become: no
 
   pre_tasks:
@@ -35,11 +34,12 @@
       dest: ~/.trufflehog-global-ignore
       force: no
 
-  - name: install stuff from brewfile
-    shell: brew bundle --file={{ ansible_env.HOME }}/Brewfile
+  - name: install stuff from brewfile (no upgrade to avoid breaking ansible)
+    shell: brew bundle --file={{ ansible_facts['env']['HOME'] }}/Brewfile --no-upgrade
+    ignore_errors: yes
 
   - name: run link script
-    shell: "{{ ansible_env.HOME }}/git/dotfiles/mac/link.sh"
+    shell: "{{ ansible_facts['env']['HOME'] }}/git/dotfiles/mac/link.sh"
 
   - name: check current shell
     shell: dscl . -read /Users/$USER UserShell
@@ -167,3 +167,17 @@
     homebrew:
       name: commitizen
       state: present
+
+  - name: playbook complete
+    debug:
+      msg:
+        - "✅ Playbook completed successfully!"
+        - ""
+        - "⚠️  Note: Package upgrades are not done automatically"
+        - "   To upgrade packages, run: brew upgrade"
+        - ""
+        - "To import iTerm2 profile:"
+        - "  1. Open iTerm2 > Settings > Profiles"
+        - "  2. Click 'Other Actions' (bottom left) > Import JSON Profiles"
+        - "  3. Select: ~/git/dotfiles/mac/iterm profile from dotfiles.json"
+        - "  4. Set as default profile"
