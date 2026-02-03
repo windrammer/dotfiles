@@ -1,2 +1,3 @@
 #!/bin/bash
-trufflehog filesystem . --exclude-paths=$HOME/.trufflehog-global-ignore --no-verification --fail
+# Get staged files and scan them with trufflehog
+git diff --cached --diff-filter=d --name-only -z | xargs -0 trufflehog filesystem --exclude-paths=$HOME/.trufflehog-global-ignore --no-verification --fail

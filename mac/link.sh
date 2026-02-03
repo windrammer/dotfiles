@@ -27,4 +27,7 @@ chmod +x ~/.git-hooks/pre-commit ~/.git-hooks/commit-msg
 ln -sf "$DOTFILES_DIR/commitlint.config.js" ~/commitlint.config.js
 
 # Link Rectangle config
-ln -sf "$DOTFILES_DIR/rectangle-config.json" ~/Library/Preferences/com.knollsoft.Rectangle.plist
+ln -sf "$DOTFILES_DIR/rectangle-config.plist" ~/Library/Preferences/com.knollsoft.Rectangle.plist
+
+# Link git commit template
+ln -sf "$DOTFILES_DIR/git-commit-template" ~/.git-commit-template

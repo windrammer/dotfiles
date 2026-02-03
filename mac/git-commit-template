@@ -1,0 +1,13 @@
+
+
+# Please enter the commit message for your changes. Lines starting
+# with '#' will be ignored, and an empty message aborts the commit.
+
+# Expected commit message format: type(scope): subject
+# Examples: feat: add new feature
+#           fix(auth): resolve login bug
+#
+# Valid types: feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert, wip
+#
+# To bypass: prefix message with 'wip:'
+

@@ -92,6 +92,12 @@
       value: ~/.git-hooks
       scope: global
 
+  - name: configure git commit template
+    git_config:
+      name: commit.template
+      value: ~/.git-commit-template
+      scope: global
+
   - name: run link script
     shell: "{{ ansible_facts['env']['HOME'] }}/git/dotfiles/mac/link.sh"
 
