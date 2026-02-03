@@ -44,6 +44,9 @@ set t_Co=256		" Force 256 colour-support.
 " Don't redraw while executing macros (good for performance).
 set lazyredraw
 
+" Disable iTerm2's proprietary escape sequences that can cause display issues
+set t_RV=
+
 " No annoying sounds or screen flashing.
 set noerrorbells
 set novisualbell

@@ -79,12 +79,13 @@ alias i='istioctl'
 alias lgit='lazygit'
 alias docker='podman'
 alias k9s='k9s -A'
-alias zed="/Applications/Zed.app/Contents/MacOS/cli"
+alias zed='/Applications/Zed.app/Contents/MacOS/cli'
+alias cat='bat --pagination=never'
 
 
 # trufflehog-exclude() { echo "^$1$" >> ~/.trufflehog-global-ignore && echo "Excluded $1 globally for Trufflehog"; }
 
-trufflehog-exclude() { 
+trufflehog-exclude() {
   fp="$(cd "$(dirname "$1")" && pwd)/$(basename "$1")"
   fn="$(basename "$1")"
   rp="$1"  # relative path as provided
