@@ -81,6 +81,10 @@ alias docker='podman'
 alias k9s='k9s -A'
 alias zed='/Applications/Zed.app/Contents/MacOS/cli'
 alias cat='bat --pagination=never'
+alias ls='lsd'
+alias ll='lsd -lh'
+alias la='lsd -lAh'
+alias lt='lsd --tree'
 
 
 # trufflehog-exclude() { echo "^$1$" >> ~/.trufflehog-global-ignore && echo "Excluded $1 globally for Trufflehog"; }
