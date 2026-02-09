@@ -98,6 +98,11 @@
       value: ~/.git-commit-template
       scope: global
 
+  - name: disable Spotlight keyboard shortcut (cmd+space)
+    shell: |
+      /usr/libexec/PlistBuddy -c "Set :AppleSymbolicHotKeys:64:enabled false" ~/Library/Preferences/com.apple.symbolichotkeys.plist 2>/dev/null || true
+    ignore_errors: yes
+
   - name: run link script
     shell: "{{ ansible_facts['env']['HOME'] }}/git/dotfiles/mac/link.sh"
 
@@ -114,3 +119,9 @@
         - "  2. Click 'Other Actions' (bottom left) > Import JSON Profiles"
         - "  3. Select: ~/git/dotfiles/mac/iterm profile from dotfiles.json"
         - "  4. Set as default profile"
+        - ""
+        - "To configure Raycast (if installed):"
+        - "  1. Open Raycast"
+        - "  2. Go to Preferences > Hotkey"
+        - "  3. Set to cmd+space (Spotlight shortcut is already disabled)"
+        - "  4. Restart your Mac for Spotlight changes to take effect"

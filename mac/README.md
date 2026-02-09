@@ -1,7 +1,6 @@
 # Things not managed in playbook
 
 1password
-raycast
 calbar
 
 # Check user path in link script and run the ansible playbook
