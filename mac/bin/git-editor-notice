@@ -1,0 +1,19 @@
+#!/bin/sh
+
+editor="${VISUAL:-${EDITOR:-vi}}"
+self_name="$(basename "$0")"
+editor_name="$(basename "$editor")"
+
+if [ "$editor" = "$0" ] || [ "$editor_name" = "$self_name" ]; then
+  editor="vi"
+fi
+
+# Support editor commands with args (e.g., "code --wait").
+sh -c "$editor \"\$@\"" -- "$@"
+status=$?
+
+if [ $status -ne 0 ]; then
+  printf '\n\033[1;31m🚨 Git editor failed (exit %s).\033[0m\n\033[0;33mCheck EDITOR/VISUAL or set core.editor.\033[0m\n\n' "$status" >&2
+fi
+
+exit $status

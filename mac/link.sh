@@ -17,6 +17,11 @@ ln -sf "$DOTFILES_DIR/p10k.zsh" ~/.p10k.zsh
 # Link zshrc
 ln -sf "$DOTFILES_DIR/zshrc" ~/.zshrc
 
+# Link git editor wrapper
+mkdir -p ~/.bin
+chmod +x "$DOTFILES_DIR/bin/git-editor-notice"
+ln -sf "$DOTFILES_DIR/bin/git-editor-notice" ~/.bin/git-editor-notice
+
 # Link git hooks
 mkdir -p ~/.git-hooks
 ln -sf "$DOTFILES_DIR/git-hooks/pre-commit" ~/.git-hooks/pre-commit

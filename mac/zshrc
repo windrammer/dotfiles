@@ -57,6 +57,9 @@ setopt nosharehistory
 export HISTSIZE=10000
 export SAVEHIST=10000
 
+# Use a git editor wrapper so failures are hard to miss.
+export GIT_EDITOR="$HOME/.bin/git-editor-notice"
+
 # export MANPATH="/usr/local/man:$MANPATH"
 
 # You may need to manually set your language environment
