@@ -31,3 +31,5 @@ else
   echo "⚠️  npx not found, skipping commitlint validation"
   exit 0
 fi
+
+printf '\n\033[0;32m✅ Commit made successfully.\033[0m\n\n'
