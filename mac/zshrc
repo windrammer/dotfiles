@@ -88,6 +88,8 @@ alias ls='lsd'
 alias ll='lsd -lh'
 alias la='lsd -lAh'
 alias lt='lsd --tree'
+alias vim='nvim'
+alias vi='nvim'
 
 
 # trufflehog-exclude() { echo "^$1$" >> ~/.trufflehog-global-ignore && echo "Excluded $1 globally for Trufflehog"; }
