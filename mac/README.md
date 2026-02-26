@@ -4,7 +4,7 @@
 
 - Git commit editing uses `~/.bin/git-editor-notice` via `GIT_EDITOR`.
 - If the editor exits with a non-zero status while editing `COMMIT_EDITMSG`, the wrapper:
-	- prepends a visible commented emoji hint at the top of the commit message buffer (without duplicating it), and
+	- inserts a visible commented banner (with emoji, timestamp, and exit code) directly under the commit title line (without duplicating it), and
 	- automatically reopens the same commit message in Vim once.
 - If the retry succeeds, no terminal error is shown; if retry still fails, the terminal failure warning is printed.
 - You can still abort manually in Vim with `:q!`.
