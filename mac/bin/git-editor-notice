@@ -13,7 +13,55 @@ sh -c "$editor \"\$@\"" -- "$@"
 status=$?
 
 if [ $status -ne 0 ]; then
-  printf '\n\033[1;31m🚨 Git editor failed (exit %s).\033[0m\n\033[0;33mCheck EDITOR/VISUAL or set core.editor.\033[0m\n\n' "$status" >&2
+  note_added=0
+  note_marker="# ❌⚠️ ==== EDITOR FAILED PREVIOUSLY ===="
+  for file_path in "$@"; do
+    if [ "$(basename "$file_path")" = "COMMIT_EDITMSG" ] && [ -w "$file_path" ]; then
+      if ! grep -qF "$note_marker" "$file_path"; then
+        tmp_file="$(mktemp)"
+        failed_at="$(date '+%Y-%m-%d %H:%M:%S %z')"
+        awk -v note_marker="$note_marker" -v failed_at="$failed_at" -v exit_code="$status" '
+          BEGIN { inserted = 0 }
+          {
+            print
+            if (inserted == 0 && $0 !~ /^[[:space:]]*#/ && $0 !~ /^[[:space:]]*$/) {
+              print ""
+              print note_marker
+              print "# FAILED AT: " failed_at
+              print "# EXIT CODE: " exit_code
+              print "# ACTION: Fix commit message, then save with :wq"
+              print "# ABORT: Use :q!"
+              print "# ===================================="
+              inserted = 1
+            }
+          }
+          END {
+            if (inserted == 0) {
+              print note_marker
+              print "# FAILED AT: " failed_at
+              print "# EXIT CODE: " exit_code
+              print "# ACTION: Fix commit message, then save with :wq"
+              print "# ABORT: Use :q!"
+              print "# ===================================="
+            }
+          }
+        ' "$file_path" > "$tmp_file"
+        cat "$tmp_file" > "$file_path"
+        rm -f "$tmp_file"
+      fi
+      note_added=1
+    fi
+  done
+
+  if [ "$note_added" -eq 1 ]; then
+    printf '\033[0;33mReopening commit message in vim...\033[0m\n\n' >&2
+    vi "$@"
+    status=$?
+  fi
+
+  if [ $status -ne 0 ]; then
+    printf '\n\033[1;31m🚨 Git editor failed (exit %s).\033[0m\n\033[0;33mCheck EDITOR/VISUAL or set core.editor.\033[0m\n\n' "$status" >&2
+  fi
 fi
 
 exit $status
