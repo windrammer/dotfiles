@@ -8,6 +8,10 @@ if [ -f ~/.vimrc ] && [ ! -L ~/.vimrc ]; then
 fi
 ln -sf "$DOTFILES_DIR/vimrc" ~/.vimrc
 
+# Link Neovim init to the same config
+mkdir -p ~/.config/nvim
+ln -sf "$DOTFILES_DIR/vimrc" ~/.config/nvim/init.vim
+
 # Link Brewfile
 ln -sf "$DOTFILES_DIR/Brewfile" ~/Brewfile
 

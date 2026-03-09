@@ -296,8 +296,8 @@ Plug 'gregsexton/gitv', {'on': 'Gitv'}
 Plug 'airblade/vim-gitgutter'
 
 " NERDTree
-Plug 'scrooloose/nerdtree'
-Plug 'Xuyuanp/nerdtree-git-plugin'
+"Plug 'scrooloose/nerdtree'
+"Plug 'Xuyuanp/nerdtree-git-plugin'
 
 " Python stuff
 Plug 'anntzer/python-syntax-1'
@@ -375,21 +375,21 @@ set sessionoptions-=blank
 
 " NERDTree
 "------------------------------------------------------------------------------
-let g:NERDTreeRespectWildIgnore = 1
-let g:NERDTreeMouseMode = 2
-let g:NERDTreeNaturalSort = 1
-let g:NERDTreeMinimalUI = 1
+"let g:NERDTreeRespectWildIgnore = 1
+"let g:NERDTreeMouseMode = 2
+"let g:NERDTreeNaturalSort = 1
+"let g:NERDTreeMinimalUI = 1
 
-augroup au_NERDTree
-	autocmd!
-	" Automatically show NERDTree on startup.
-	autocmd VimEnter * NERDTree | wincmd p
-	" Close vim when only NERDTree is left open.
-	autocmd BufEnter * if (winnr('$') == 1 && exists('b:NERDTree') &&
-		\ b:NERDTree.isTabTree()) | q | endif
-augroup end
+"augroup au_NERDTree
+"	autocmd!
+"	" Automatically show NERDTree on startup.
+"	autocmd VimEnter * NERDTree | wincmd p
+"	" Close vim when only NERDTree is left open.
+"	autocmd BufEnter * if (winnr('$') == 1 && exists('b:NERDTree') &&
+"		\ b:NERDTree.isTabTree()) | q | endif
+"augroup end
 " Toggle on F12
-map <F12> :NERDTreeToggle<CR>
+"map <F12> :NERDTreeToggle<CR>
 
 
 if en_deoplete
