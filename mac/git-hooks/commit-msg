@@ -25,6 +25,21 @@ if command -v npx >/dev/null 2>&1; then
     echo "💡 To fix: git commit --amend"
     echo "💡 To bypass: prefix message with 'wip:'"
     echo ""
+    echo "Commit types:"
+    echo "  feat: A new feature"
+    echo "  fix: A bug fix"
+    echo "  docs: Documentation only changes"
+    echo "  style: Changes that do not affect code meaning"
+    echo "  refactor: Neither fixes a bug nor adds a feature"
+    echo "  perf: A code change that improves performance"
+    echo "  test: Adding or correcting tests"
+    echo "  build: Changes to build system or dependencies"
+    echo "  ci: Changes to CI configuration and scripts"
+    echo "  chore: Other maintenance changes"
+    echo "  revert: Revert something"
+    echo "  wip: Skip validation hook (local shortcut)"
+    echo ""
+    echo ""
     exit 1
   fi
 else
