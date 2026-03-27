@@ -12,6 +12,25 @@
 1password
 calbar
 
+## 🏗️ git pushbuild
+
+Push and trigger a Woodpecker CI build in one command. The API token is stored in macOS Keychain — nothing in shell profiles or dotfiles.
+
+```bash
+git pushbuild          # push to origin + trigger Woodpecker pipeline
+```
+
+**First-time setup — store the token:**
+```bash
+security add-generic-password -s woodpecker-api-token -a token -w "<YOUR_TOKEN>"
+```
+
+**Update the token:**
+```bash
+security delete-generic-password -s woodpecker-api-token -a token 2>/dev/null
+security add-generic-password -s woodpecker-api-token -a token -w "<NEW_TOKEN>"
+```
+
 # Check user path in link script and run the ansible playbook
 
 If autocomplete or directories are not changing colour, adjust black bright and cyan bright

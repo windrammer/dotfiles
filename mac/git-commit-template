@@ -14,4 +14,6 @@
 # Version bumps: fix → patch, feat → minor, break → major
 #
 # To bypass: prefix message with 'wip:'
+#
+# 🏗️ Use `git pushbuild` to push and trigger a Woodpecker CI build
 

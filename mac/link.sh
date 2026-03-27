@@ -23,8 +23,9 @@ ln -sf "$DOTFILES_DIR/zshrc" ~/.zshrc
 
 # Link git editor wrapper
 mkdir -p ~/.bin
-chmod +x "$DOTFILES_DIR/bin/git-editor-notice"
+chmod +x "$DOTFILES_DIR/bin/git-editor-notice" "$DOTFILES_DIR/bin/git-pushbuild"
 ln -sf "$DOTFILES_DIR/bin/git-editor-notice" ~/.bin/git-editor-notice
+ln -sf "$DOTFILES_DIR/bin/git-pushbuild" ~/.bin/git-pushbuild
 
 # Link git hooks
 mkdir -p ~/.git-hooks
