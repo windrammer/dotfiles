@@ -41,3 +41,11 @@ ln -sf "$DOTFILES_DIR/rectangle-config.plist" ~/Library/Preferences/com.knollsof
 
 # Link git commit template
 ln -sf "$DOTFILES_DIR/git-commit-template" ~/.git-commit-template
+
+# Link git-diagnose script
+chmod +x "$DOTFILES_DIR/bin/git-diagnose"
+ln -sf "$DOTFILES_DIR/bin/git-diagnose" ~/.bin/git-diagnose
+
+# Link global gitignore and configure git to use it
+ln -sf "$DOTFILES_DIR/gitignore_global" ~/.gitignore_global
+git config --global core.excludesfile ~/.gitignore_global

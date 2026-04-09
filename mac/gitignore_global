@@ -1,0 +1,14 @@
+# Global gitignore — managed via dotfiles
+# Linked to ~/.gitignore_global
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor swap/backup files
+*.swp
+*.swo
+*~
+
+# git-diagnose output
+REPO-DIAGNOSTICS-*.md

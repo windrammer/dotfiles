@@ -1,0 +1,330 @@
+#!/bin/zsh
+#
+# git-diagnose — Generate a diagnostic report for a git repository.
+# Produces a markdown file and prints to stdout.
+#
+# Usage:
+#   git-diagnose              Run in current repo
+#   git-diagnose --heatmap    Include weekday/time-of-day commit heatmap
+#   git-diagnose /path/to/repo
+#   git-diagnose --heatmap /path/to/repo
+
+set -euo pipefail
+
+# ── Colours & formatting ────────────────────────────────────────────
+BOLD='\033[1m'
+DIM='\033[2m'
+CYAN='\033[0;36m'
+GREEN='\033[0;32m'
+YELLOW='\033[0;33m'
+RESET='\033[0m'
+
+# ── Args ─────────────────────────────────────────────────────────────
+HEATMAP=false
+TARGET_DIR=""
+
+for arg in "$@"; do
+  case "$arg" in
+    --heatmap) HEATMAP=true ;;
+    *)         TARGET_DIR="$arg" ;;
+  esac
+done
+
+if [[ -n "$TARGET_DIR" ]]; then
+  cd "$TARGET_DIR"
+fi
+
+# Verify we're in a git repo
+if ! git rev-parse --is-inside-work-tree &>/dev/null; then
+  echo "Error: not a git repository" >&2
+  exit 1
+fi
+
+# Warn if shallow clone
+if git rev-parse --is-shallow-repository 2>/dev/null | grep -q true; then
+  echo "${YELLOW}⚠️  Shallow clone detected — diagnostics will be incomplete.${RESET}" >&2
+  echo "${DIM}   Run 'git fetch --unshallow' for full history, then re-run git-diagnose.${RESET}" >&2
+  echo ""
+fi
+
+REPO_NAME=$(basename "$(git rev-parse --show-toplevel)")
+DATE_STAMP=$(date +"%Y-%m-%d")
+OUTFILE="REPO-DIAGNOSTICS-${DATE_STAMP}.md"
+
+# ── Helpers ──────────────────────────────────────────────────────────
+
+bar() {
+  local count=$1
+  local max=$2
+  local width=30
+  if [[ $max -eq 0 ]]; then
+    echo ""
+    return
+  fi
+  local filled=$(( (count * width) / max ))
+  [[ $filled -eq 0 && $count -gt 0 ]] && filled=1
+  printf '%0.s█' $(seq 1 $filled)
+}
+
+section() {
+  echo ""
+  echo "## $1"
+  echo ""
+}
+
+# ── Build report in memory ───────────────────────────────────────────
+
+report=""
+append() { report+="$1"$'\n'; }
+
+append "# Diagnostics: ${REPO_NAME}"
+append "Generated on ${DATE_STAMP}"
+append ""
+
+# ── 1. Most Changed Files (last 12 months) ──────────────────────────
+
+append "## Most Changed Files (last 12 months)"
+append ""
+append '```'
+
+most_changed=$(git log --since="1 year ago" --pretty=format: --name-only \
+  | grep -v '^$' \
+  | sort | uniq -c | sort -rn | head -20)
+
+if [[ -z "$most_changed" ]]; then
+  append "No file changes found in the last 12 months."
+else
+  max_count=$(echo "$most_changed" | head -1 | awk '{print $1}')
+  echo "$most_changed" | while IFS= read -r line; do
+    count=$(echo "$line" | awk '{print $1}')
+    file=$(echo "$line" | awk '{$1=""; print substr($0,2)}')
+    b=$(bar "$count" "$max_count")
+    append "$(printf '%4d  %-20s  %s' "$count" "$b" "$file")"
+  done
+fi
+
+append '```'
+append ""
+
+# ── 2. Contributors ─────────────────────────────────────────────────
+
+append "## Contributors"
+append ""
+append '```'
+
+contributors=$(git shortlog -sn --no-merges)
+total_commits=$(echo "$contributors" | awk '{s+=$1} END {print s}')
+
+if [[ -z "$contributors" ]]; then
+  append "No contributors found."
+else
+  echo "$contributors" | while IFS= read -r line; do
+    count=$(echo "$line" | awk '{print $1}')
+    name=$(echo "$line" | awk '{$1=""; print substr($0,2)}')
+    if [[ $total_commits -gt 0 ]]; then
+      pct=$(( (count * 100) / total_commits ))
+    else
+      pct=0
+    fi
+    append "$(printf '%4d  (%2d%%)  %s' "$count" "$pct" "$name")"
+  done
+
+  # Bus factor warning
+  top_count=$(echo "$contributors" | head -1 | awk '{print $1}')
+  if [[ $total_commits -gt 0 ]]; then
+    top_pct=$(( (top_count * 100) / total_commits ))
+    if [[ $top_pct -ge 60 ]]; then
+      append ""
+      append "⚠️  Bus factor risk: top contributor accounts for ${top_pct}% of commits"
+    fi
+  fi
+fi
+
+append '```'
+append ""
+
+# ── 3. Reverts & Hotfixes ───────────────────────────────────────────
+
+append "## Reverts & Hotfixes"
+append ""
+
+reverts=$(git log --oneline --all \
+  --grep="revert" --grep="hotfix" --grep="emergency" --grep="rollback" \
+  -i --since="1 year ago" 2>/dev/null || true)
+
+if [[ -z "$reverts" ]]; then
+  append "None found in the last 12 months."
+else
+  revert_count=$(echo "$reverts" | wc -l | tr -d ' ')
+  append "${revert_count} found in the last 12 months:"
+  append ""
+  append '```'
+  append "$reverts"
+  append '```'
+fi
+
+append ""
+
+# ── 4. Bug Clusters ─────────────────────────────────────────────────
+
+append "## Bug Clusters"
+append ""
+append '```'
+
+bug_files=$(git log --since="1 year ago" \
+  --grep="fix" --grep="bug" -i \
+  --pretty=format: --name-only \
+  | grep -v '^$' \
+  | sort | uniq -c | sort -rn | head -20)
+
+if [[ -z "$bug_files" ]]; then
+  append "No bug-related commits found in the last 12 months."
+else
+  max_bug=$(echo "$bug_files" | head -1 | awk '{print $1}')
+  echo "$bug_files" | while IFS= read -r line; do
+    count=$(echo "$line" | awk '{print $1}')
+    file=$(echo "$line" | awk '{$1=""; print substr($0,2)}')
+    b=$(bar "$count" "$max_bug")
+    append "$(printf '%4d  %-20s  %s' "$count" "$b" "$file")"
+  done
+fi
+
+append '```'
+append ""
+
+# ── 5. Recent Activity ──────────────────────────────────────────────
+
+append "## Recent Activity"
+append ""
+append "### Commits per Month (last 12 months)"
+append ""
+append '```'
+
+# Get monthly commit counts
+monthly_data=""
+max_monthly=0
+for i in $(seq 11 -1 0); do
+  if [[ "$(uname)" == "Darwin" ]]; then
+    month_start=$(date -v-${i}m +"%Y-%m-01")
+    month_label=$(date -v-${i}m +"%Y-%m")
+    if [[ $i -eq 0 ]]; then
+      month_end=$(date +"%Y-%m-%d")
+    else
+      month_end=$(date -v-$(( i - 1 ))m +"%Y-%m-01")
+    fi
+  else
+    month_start=$(date -d "$(date +%Y-%m-01) -${i} months" +"%Y-%m-01")
+    month_label=$(date -d "$(date +%Y-%m-01) -${i} months" +"%Y-%m")
+    if [[ $i -eq 0 ]]; then
+      month_end=$(date +"%Y-%m-%d")
+    else
+      month_end=$(date -d "$(date +%Y-%m-01) -$(( i - 1 )) months" +"%Y-%m-01")
+    fi
+  fi
+
+  count=$(git log --oneline --after="$month_start" --before="$month_end" 2>/dev/null | wc -l | tr -d ' ')
+  monthly_data+="${month_label}:${count}"$'\n'
+  [[ $count -gt $max_monthly ]] && max_monthly=$count
+done
+
+echo "$monthly_data" | grep -v '^$' | while IFS=':' read -r label count; do
+  b=$(bar "$count" "$max_monthly")
+  append "$(printf '  %s  %-30s  %s' "$label" "$b" "$count")"
+done
+
+append '```'
+append ""
+
+# Summary stats
+append "### Summary"
+append ""
+
+last_commit_date=$(git log -1 --format="%ar" 2>/dev/null || echo "unknown")
+append "- **Last commit:** ${last_commit_date}"
+
+# Average gap between commits (last 100 commits)
+commit_dates=$(git log --format="%at" -100 2>/dev/null)
+commit_count=$(echo "$commit_dates" | wc -l | tr -d ' ')
+
+if [[ $commit_count -ge 2 ]]; then
+  newest=$(echo "$commit_dates" | head -1)
+  oldest=$(echo "$commit_dates" | tail -1)
+  span_days=$(( (newest - oldest) / 86400 ))
+  avg_gap=$(( span_days / (commit_count - 1) ))
+  if [[ $avg_gap -eq 0 ]]; then
+    append "- **Average gap between commits:** less than a day (based on last ${commit_count} commits)"
+  elif [[ $avg_gap -eq 1 ]]; then
+    append "- **Average gap between commits:** ~1 day (based on last ${commit_count} commits)"
+  else
+    append "- **Average gap between commits:** ~${avg_gap} days (based on last ${commit_count} commits)"
+  fi
+fi
+
+append ""
+
+# ── 6. Heatmap (optional) ───────────────────────────────────────────
+
+if [[ "$HEATMAP" == true ]]; then
+  append "## Commit Heatmap (last 12 months)"
+  append ""
+  append '```'
+  append "             Morning    Afternoon  Evening    Night"
+  append "             (6-12)     (12-18)    (18-22)    (22-6)"
+
+  # Collect heatmap data: day_of_week x time_bucket
+  # dow: 1=Monday .. 7=Sunday, buckets: morning/afternoon/evening/night
+  typeset -A heatmap
+  heatmap_max=0
+
+  while IFS= read -r line; do
+    dow=$(echo "$line" | awk '{print $1}')
+    hour=$(echo "$line" | awk '{print $2}')
+
+    if [[ $hour -ge 6 && $hour -lt 12 ]]; then
+      bucket="morning"
+    elif [[ $hour -ge 12 && $hour -lt 18 ]]; then
+      bucket="afternoon"
+    elif [[ $hour -ge 18 && $hour -lt 22 ]]; then
+      bucket="evening"
+    else
+      bucket="night"
+    fi
+
+    key="${dow}_${bucket}"
+    heatmap[$key]=$(( ${heatmap[$key]:-0} + 1 ))
+    [[ ${heatmap[$key]} -gt $heatmap_max ]] && heatmap_max=${heatmap[$key]}
+  done < <(git log --since="1 year ago" --format="%u %H" 2>/dev/null)
+
+  days=("Monday" "Tuesday" "Wednesday" "Thursday" "Friday" "Saturday" "Sunday")
+  buckets=("morning" "afternoon" "evening" "night")
+
+  for d in 1 2 3 4 5 6 7; do
+    day_label="${days[$d]}"
+    line_out=$(printf '  %-11s' "$day_label")
+    for bucket in "${buckets[@]}"; do
+      key="${d}_${bucket}"
+      count=${heatmap[$key]:-0}
+      if [[ $count -eq 0 ]]; then
+        cell="░"
+      else
+        cell=$(bar "$count" "$heatmap_max")
+      fi
+      line_out+=$(printf '  %-10s' "$cell")
+    done
+    append "$line_out"
+  done
+
+  append '```'
+  append ""
+fi
+
+# ── Write file & print ──────────────────────────────────────────────
+
+echo "$report" > "$OUTFILE"
+
+# Print coloured version to stdout
+echo ""
+echo "${BOLD}${CYAN}📊 Repository diagnostics: ${REPO_NAME}${RESET}"
+echo "${DIM}Report saved to ${OUTFILE}${RESET}"
+echo ""
+echo "$report"
