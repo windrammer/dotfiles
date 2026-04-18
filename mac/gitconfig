@@ -1,0 +1,21 @@
+[user]
+	name = David Tollman
+	email = mail@toll.is
+	signingkey = B4D72DB9C9D8B4FB
+
+[commit]
+	gpgsign = true
+	template = ~/.git-commit-template
+
+[tag]
+	gpgsign = true
+
+[pull]
+	rebase = true
+
+[core]
+	excludesfile = ~/.gitignore_global
+	hooksPath = ~/.git-hooks
+
+[init]
+	defaultBranch = main

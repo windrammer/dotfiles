@@ -105,7 +105,10 @@ trufflehog-exclude() {
 }
 
 
-# Wrap git to offer diagnostics after clone
+# Wrap git to offer diagnostics and set email after clone
+GIT_WORK_ORGS_FILE="$HOME/.git-work-orgs"
+GIT_WORK_EMAIL="david.tollman@playgroundtech.io"
+
 git() {
   if [[ "$1" == "clone" ]]; then
     command git "$@"
@@ -123,8 +126,42 @@ git() {
       fi
 
       if [[ -d "$clone_dir" ]]; then
-        # Skip prompt for shallow clones — not enough history to be useful
-        if git -C "$clone_dir" rev-parse --is-shallow-repository 2>/dev/null | grep -q true; then
+        # ── Email detection ──────────────────────────────────
+        # Extract org from remote URL (handles git@ and https://)
+        local remote_url=$(command git -C "$clone_dir" remote get-url origin 2>/dev/null)
+        local org=""
+        if [[ "$remote_url" == git@* ]]; then
+          org=$(echo "$remote_url" | sed 's#.*:##; s#/.*##')
+        else
+          org=$(echo "$remote_url" | sed 's#.*/\([^/]*\)/[^/]*$#\1#')
+        fi
+
+        local is_work=false
+        if [[ -n "$org" && -f "$GIT_WORK_ORGS_FILE" ]] && grep -qix "$org" "$GIT_WORK_ORGS_FILE"; then
+          is_work=true
+          command git -C "$clone_dir" config user.email "$GIT_WORK_EMAIL"
+          printf '\n\033[0;32m📧 Work org detected (%s) — email set to %s\033[0m\n' "$org" "$GIT_WORK_EMAIL"
+        else
+          printf '\n\033[0;36mWork or personal repo? [w/P]\033[0m '
+          read -r email_answer
+          if [[ "$email_answer" =~ ^[Ww]$ ]]; then
+            command git -C "$clone_dir" config user.email "$GIT_WORK_EMAIL"
+            printf '\033[0;32m📧 Email set to %s\033[0m\n' "$GIT_WORK_EMAIL"
+            # Offer to remember the org
+            if [[ -n "$org" ]]; then
+              printf '\033[0;36mAdd "%s" to work orgs list? [y/N]\033[0m ' "$org"
+              read -r add_org
+              if [[ "$add_org" =~ ^[Yy]$ ]]; then
+                echo "$org" >> "$GIT_WORK_ORGS_FILE"
+                printf '\033[0;32m✅ Added "%s" to %s\033[0m\n' "$org" "$GIT_WORK_ORGS_FILE"
+              fi
+            fi
+          fi
+        fi
+
+        # ── Diagnostics ──────────────────────────────────────
+        # Skip for shallow clones — not enough history to be useful
+        if command git -C "$clone_dir" rev-parse --is-shallow-repository 2>/dev/null | grep -q true; then
           printf '\n\033[0;33mShallow clone detected — skipping diagnostics.\033[0m\n'
         else
           printf '\n\033[0;36mRun repository diagnostics? [y/N]\033[0m '
@@ -137,7 +174,15 @@ git() {
     fi
     return $exit_code
   else
-    command git "$@"
+    # Check for custom git-* subcommands on PATH before falling through
+    # (command git doesn't do the PATH lookup that bare git does)
+    local subcmd="git-$1"
+    if command -v "$subcmd" &>/dev/null; then
+      shift
+      "$subcmd" "$@"
+    else
+      command git "$@"
+    fi
   fi
 }
 

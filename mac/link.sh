@@ -46,6 +46,15 @@ ln -sf "$DOTFILES_DIR/git-commit-template" ~/.git-commit-template
 chmod +x "$DOTFILES_DIR/bin/git-diagnose"
 ln -sf "$DOTFILES_DIR/bin/git-diagnose" ~/.bin/git-diagnose
 
-# Link global gitignore and configure git to use it
+# Link global gitignore
 ln -sf "$DOTFILES_DIR/gitignore_global" ~/.gitignore_global
-git config --global core.excludesfile ~/.gitignore_global
+
+# Link git work orgs list (used by git clone wrapper for email detection)
+ln -sf "$DOTFILES_DIR/git-work-orgs" ~/.git-work-orgs
+
+# Link gitconfig (replaces scattered git config --global calls)
+ln -sf "$DOTFILES_DIR/gitconfig" ~/.gitconfig
+
+# Link gpg-agent config
+mkdir -p ~/.gnupg
+ln -sf "$DOTFILES_DIR/gpg-agent.conf" ~/.gnupg/gpg-agent.conf
