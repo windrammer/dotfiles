@@ -91,6 +91,8 @@ alias lt='lsd --tree'
 alias vim='nvim'
 alias vi='nvim'
 
+# Deploy YubiKey SSH public key to a server
+ssh-add-yubikey() { ssh-copy-id -f -i ~/.ssh/gpg-yubikey.pub "$@"; }
 
 # trufflehog-exclude() { echo "^$1$" >> ~/.trufflehog-global-ignore && echo "Excluded $1 globally for Trufflehog"; }
 
