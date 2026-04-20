@@ -43,6 +43,8 @@ plugins=(
   fzf
 )
 
+ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=60'
+
 source $ZSH/oh-my-zsh.sh
 source <(kubectl completion zsh)
 # export PS1='$(kube_ps1)'$PS1
