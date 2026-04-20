@@ -1,6 +1,3 @@
-echo ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE=\'fg=60\' >> $ZSH_CUSTOM/zsh-autosuggestions_custom.zsh
-add gitconfig
-git config name
-git config mail
-git config pull.rebase false
-
+# Done
+# - ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE (added to zshrc)
+# - gitconfig with name, email, pull.rebase, gpg signing
