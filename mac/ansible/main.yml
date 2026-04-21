@@ -4,6 +4,11 @@
   connection: local
   become: no
 
+  vars_prompt:
+    - name: ansible_become_password
+      prompt: "sudo password (needed for pkg installers)"
+      private: yes
+
   pre_tasks:
     - name: Check if homebrew is installed
       stat:
@@ -103,6 +108,39 @@
       /usr/libexec/PlistBuddy -c "Set :AppleSymbolicHotKeys:64:enabled false" ~/Library/Preferences/com.apple.symbolichotkeys.plist 2>/dev/null || true
     ignore_errors: yes
 
+  - name: check if GPG Tap Notifier is installed
+    stat:
+      path: /Applications/GPG Tap Notifier.app
+    register: gpg_tap_notifier_check
+
+  - name: download GPG Tap Notifier pkg
+    get_url:
+      url: https://github.com/palantir/gpg-tap-notifier-macos/releases/download/v0.4.2/GPG_Tap_Notifier.pkg
+      dest: /tmp/GPG_Tap_Notifier.pkg
+      mode: '0644'
+    when: not gpg_tap_notifier_check.stat.exists
+
+  - name: install GPG Tap Notifier pkg
+    become: yes
+    shell: installer -pkg /tmp/GPG_Tap_Notifier.pkg -target /
+    when: not gpg_tap_notifier_check.stat.exists
+    register: gpg_tap_notifier_installed
+
+  - name: configure GPG Tap Notifier scdaemon path
+    shell: defaults write com.palantir.gpg-tap-notifier scdaemonPath /opt/homebrew/opt/gnupg/libexec/scdaemon
+    register: gpg_tap_notifier_scdaemon_defaults
+    changed_when: false
+
+  - name: configure GPG Tap Notifier gpgconf path
+    shell: defaults write com.palantir.gpg-tap-notifier gpgconfPath /opt/homebrew/bin/gpgconf
+    register: gpg_tap_notifier_gpgconf_defaults
+    changed_when: false
+
+  - name: reload gpg-agent so scdaemon wrapper is picked up
+    shell: gpgconf --kill gpg-agent
+    when: gpg_tap_notifier_installed is changed
+    ignore_errors: yes
+
   - name: run link script
     shell: "{{ ansible_facts['env']['HOME'] }}/git/dotfiles/mac/link.sh"
 
@@ -125,3 +163,6 @@
         - "  2. Go to Preferences > Hotkey"
         - "  3. Set to cmd+space (Spotlight shortcut is already disabled)"
         - "  4. Restart your Mac for Spotlight changes to take effect"
+        - ""
+        - "GPG Tap Notifier is installed and configured."
+        - "  Test: run a signed commit; you should get a notification when it's waiting for YubiKey touch."
