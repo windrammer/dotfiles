@@ -22,7 +22,7 @@ fi
 
 # Derive org/repo from the remote URL
 REMOTE_URL=$(git remote get-url origin 2>/dev/null)
-REPO=$(echo "$REMOTE_URL" | sed -E 's#.*/([^/]+/[^/]+?)(\.git)?$#\1#')
+REPO=$(echo "$REMOTE_URL" | sed -E 's#\.git$##; s#.*[:/]([^/]+/[^/]+)$#\1#')
 
 if [ -z "$REPO" ]; then
   echo "❌ Could not determine repo from remote URL"
