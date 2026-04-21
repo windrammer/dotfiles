@@ -141,6 +141,20 @@
     when: gpg_tap_notifier_installed is changed
     ignore_errors: yes
 
+  - name: check if homelab-ca root cert is in System keychain
+    shell: security find-certificate -c homelab-ca /Library/Keychains/System.keychain
+    register: homelab_ca_check
+    failed_when: false
+    changed_when: false
+
+  - name: install homelab-ca root cert into System keychain (trusts woodpecker.home.arpa etc.)
+    become: yes
+    shell: >
+      security add-trusted-cert -d -r trustRoot
+      -k /Library/Keychains/System.keychain
+      {{ playbook_dir }}/../certs/homelab-ca.pem
+    when: homelab_ca_check.rc != 0
+
   - name: run link script
     shell: "{{ ansible_facts['env']['HOME'] }}/git/dotfiles/mac/link.sh"
 

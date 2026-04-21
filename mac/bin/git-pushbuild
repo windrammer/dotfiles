@@ -1,5 +1,5 @@
 #!/bin/bash
-# 🏗️ git pushbuild — push to main and trigger a Woodpecker CI build
+# 🏗️ git pushbuild — push the current branch and trigger a Woodpecker CI build
 #
 # Usage: git pushbuild
 #
@@ -46,30 +46,60 @@ if [ -z "$TOKEN" ]; then
   exit 1
 fi
 
+# Branch to trigger is the one we're pushing
+BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || true)
+if [ -z "$BRANCH" ] || [ "$BRANCH" = "HEAD" ]; then
+  echo "❌ Could not determine current branch"
+  exit 1
+fi
+
 # Push first
 git push "$@"
 
+# Woodpecker 3.x uses numeric repo IDs; look ours up from owner/name
+LOOKUP=$(curl -s -w "\n%{http_code}" \
+  -H "Authorization: Bearer $TOKEN" \
+  "$WOODPECKER_URL/api/repos/lookup/$REPO" 2>/dev/null || true)
+LOOKUP_CODE=$(echo "$LOOKUP" | tail -1)
+LOOKUP_BODY=$(echo "$LOOKUP" | sed '$d')
+
+if [ "$LOOKUP_CODE" != "200" ]; then
+  echo "⚠️  Could not look up '$REPO' on Woodpecker (HTTP $LOOKUP_CODE) — is it activated?"
+  echo "   Push succeeded, but no build was triggered"
+  exit 0
+fi
+
+REPO_ID=$(echo "$LOOKUP_BODY" | jq -r '.id // empty')
+if [ -z "$REPO_ID" ]; then
+  echo "⚠️  Could not parse repo ID from Woodpecker lookup response"
+  echo "   Push succeeded, but no build was triggered"
+  exit 0
+fi
+
 # Trigger the build
 RESPONSE=$(curl -s -w "\n%{http_code}" \
-  -X POST "$WOODPECKER_URL/api/repos/$REPO/pipelines" \
+  -X POST "$WOODPECKER_URL/api/repos/$REPO_ID/pipelines" \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
-  -d "{\"branch\": \"main\"}" 2>/dev/null)
+  -d "{\"branch\": \"$BRANCH\"}" 2>/dev/null || true)
 
 HTTP_CODE=$(echo "$RESPONSE" | tail -1)
 BODY=$(echo "$RESPONSE" | sed '$d')
 
 case "$HTTP_CODE" in
   200|201)
-    echo "🏗️ Woodpecker build triggered for $REPO"
-    ;;
-  404)
-    echo "⚠️  Repo '$REPO' not found on Woodpecker — is it activated?"
-    echo "   Push succeeded, but no build was triggered"
+    NUMBER=$(echo "$BODY" | jq -r '.number // empty')
+    if [ -n "$NUMBER" ]; then
+      echo "🏗️ Woodpecker build #$NUMBER triggered for $REPO ($BRANCH)"
+      echo "   $WOODPECKER_URL/repos/$REPO_ID/pipeline/$NUMBER"
+    else
+      echo "⚠️  Unexpected response from Woodpecker (HTTP 200 but no pipeline number)"
+      [ -n "$BODY" ] && echo "   $(echo "$BODY" | head -c 200)"
+    fi
     ;;
   *)
-    echo "⚠️  Woodpecker trigger returned HTTP $HTTP_CODE for $REPO"
-    [ -n "$BODY" ] && echo "   $BODY"
+    echo "⚠️  Woodpecker trigger returned HTTP $HTTP_CODE for $REPO ($BRANCH)"
+    [ -n "$BODY" ] && echo "   $(echo "$BODY" | head -c 200)"
     echo "   Push succeeded, but no build was triggered"
     ;;
 esac
