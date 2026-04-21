@@ -36,8 +36,8 @@ chmod +x ~/.git-hooks/pre-commit ~/.git-hooks/commit-msg
 # Link commitlint config
 ln -sf "$DOTFILES_DIR/commitlint.config.js" ~/commitlint.config.js
 
-# Link Rectangle config
-ln -sf "$DOTFILES_DIR/rectangle-config.plist" ~/Library/Preferences/com.knollsoft.Rectangle.plist
+# Copy Rectangle config (not symlinked — macOS writes to this file at runtime)
+cp -n "$DOTFILES_DIR/rectangle-config.plist" ~/Library/Preferences/com.knollsoft.Rectangle.plist 2>/dev/null || true
 
 # Link git commit template
 ln -sf "$DOTFILES_DIR/git-commit-template" ~/.git-commit-template
@@ -64,3 +64,7 @@ mkdir -p ~/.ssh
 chmod 700 ~/.ssh
 ln -sf "$DOTFILES_DIR/ssh-config" ~/.ssh/config
 ln -sf "$DOTFILES_DIR/gpg-yubikey.pub" ~/.ssh/gpg-yubikey.pub
+
+# Link global CLAUDE.md for Claude Code
+mkdir -p ~/.claude
+ln -sf "$DOTFILES_DIR/CLAUDE.md" ~/.claude/CLAUDE.md
