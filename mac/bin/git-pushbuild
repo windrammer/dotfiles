@@ -38,7 +38,7 @@ if [ "$ORG" != "$ALLOWED_ORG" ]; then
 fi
 
 # Read token from macOS Keychain
-TOKEN=$(security find-generic-password -s woodpecker-api-token -a token -w 2>/dev/null)
+TOKEN=$(security find-generic-password -s woodpecker-api-token -a token -w 2>/dev/null || true)
 
 if [ -z "$TOKEN" ]; then
   echo "❌ No Woodpecker token in Keychain (service: woodpecker-api-token)"
