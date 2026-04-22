@@ -4,12 +4,41 @@
   connection: local
   become: no
 
-  vars_prompt:
-    - name: ansible_become_password
-      prompt: "sudo password (needed for pkg installers)"
-      private: yes
-
   pre_tasks:
+    - name: Show sudo-requiring tasks
+      debug:
+        msg:
+          - "The following tasks need sudo (and your password):"
+          - "  - Install GPG Tap Notifier pkg (YubiKey touch notifications on signed commits)"
+          - "  - Install homelab-ca root cert into System keychain (trusts woodpecker.home.arpa etc.)"
+          - ""
+          - "Answer yes on a fresh machine, or if either above needs to be (re)installed."
+          - "Both are idempotent — answer no on routine subsequent runs."
+
+    - name: Prompt whether to run sudo-requiring tasks
+      pause:
+        prompt: "Run sudo-requiring tasks? [y/N]"
+        echo: yes
+      register: run_sudo_prompt
+
+    - name: Resolve run_sudo_tasks fact
+      set_fact:
+        run_sudo_tasks: "{{ (run_sudo_prompt.user_input | default('') | lower) in ['y', 'yes'] }}"
+
+    - name: Prompt for sudo password
+      pause:
+        prompt: "sudo password"
+        echo: no
+      register: sudo_password_prompt
+      when: run_sudo_tasks
+      no_log: true
+
+    - name: Set ansible_become_password
+      set_fact:
+        ansible_become_password: "{{ sudo_password_prompt.user_input }}"
+      when: run_sudo_tasks
+      no_log: true
+
     - name: Check if homebrew is installed
       stat:
         path: /opt/homebrew/bin/brew
@@ -118,12 +147,12 @@
       url: https://github.com/palantir/gpg-tap-notifier-macos/releases/download/v0.4.2/GPG_Tap_Notifier.pkg
       dest: /tmp/GPG_Tap_Notifier.pkg
       mode: '0644'
-    when: not gpg_tap_notifier_check.stat.exists
+    when: run_sudo_tasks and not gpg_tap_notifier_check.stat.exists
 
   - name: install GPG Tap Notifier pkg
     become: yes
     shell: installer -pkg /tmp/GPG_Tap_Notifier.pkg -target /
-    when: not gpg_tap_notifier_check.stat.exists
+    when: run_sudo_tasks and not gpg_tap_notifier_check.stat.exists
     register: gpg_tap_notifier_installed
 
   - name: configure GPG Tap Notifier scdaemon path
@@ -153,7 +182,7 @@
       security add-trusted-cert -d -r trustRoot
       -k /Library/Keychains/System.keychain
       {{ playbook_dir }}/../certs/homelab-ca.pem
-    when: homelab_ca_check.rc != 0
+    when: run_sudo_tasks and homelab_ca_check.rc != 0
 
   - name: run link script
     shell: "{{ ansible_facts['env']['HOME'] }}/git/dotfiles/mac/link.sh"

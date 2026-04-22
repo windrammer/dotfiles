@@ -13,7 +13,8 @@
 - Don't introduce a new test framework or testing pattern without asking.
 ## Git
 - Do not create commits, amend, push, or run any destructive git operations.
-- When a logical unit of work is done, give me the commit command with a full message (subject + body) ready to run. Use the project's existing commit style if there's a clear pattern (conventional commits, etc.).
+- When a logical unit of work is done, give me the commit as plain text — `Changed files:` (repo-relative paths) then `Git commit message:` with a flush-left subject + body matching the project's existing style (conventional commits, etc.); no fenced code block, no `git commit`/HEREDOC wrapper.
+- Never include `Co-Authored-By: Claude ...` trailers (or any AI attribution) in commit messages.
 - Never force-push, reset, or delete branches.
 ## Code style (language defaults, override per-project)
 ### Go
