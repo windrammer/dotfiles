@@ -158,6 +158,17 @@
   - name: run link script
     shell: "{{ ansible_facts['env']['HOME'] }}/git/dotfiles/mac/link.sh"
 
+  - name: check if rtk is installed
+    shell: command -v rtk
+    register: rtk_check
+    failed_when: false
+    changed_when: false
+
+  - name: configure rtk hooks in global Claude Code settings (idempotent)
+    shell: rtk init -g
+    when: rtk_check.rc == 0
+    changed_when: false
+
   - name: playbook complete
     debug:
       msg:

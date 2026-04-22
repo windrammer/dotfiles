@@ -42,3 +42,5 @@
 ## Communication
 - If I'm wrong about something (wrong assumption, broken approach, bad idea), say so directly with the reasoning. Don't hedge or agree just to be agreeable.
 - When you're uncertain, say "I'm not sure" rather than generating a confident-sounding guess.
+
+@RTK.md
