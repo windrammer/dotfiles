@@ -157,6 +157,30 @@
       {{ playbook_dir }}/../certs/homelab-ca.pem
     when: run_sudo_tasks and homelab_ca_check.rc != 0
 
+  - name: check if podman machine is reachable
+    shell: podman machine ssh -- true
+    register: podman_reachable
+    changed_when: false
+    failed_when: false
+
+  - name: check if homelab-ca is in podman machine trust anchors
+    shell: podman machine ssh -- test -f /etc/pki/ca-trust/source/anchors/homelab-ca.crt
+    register: podman_homelab_cert
+    changed_when: false
+    failed_when: false
+    when: podman_reachable.rc == 0
+
+  # Restart the rootful podman service after updating trust anchors because
+  # Go's crypto/x509 caches SystemCertPool once per process, so the long-running
+  # service won't pick up the new bundle until it's restarted.
+  - name: install homelab-ca into podman machine trust anchors (so podman push trusts registry.home.arpa)
+    shell: |
+      set -euo pipefail
+      podman machine ssh -- sudo tee /etc/pki/ca-trust/source/anchors/homelab-ca.crt < {{ playbook_dir }}/../certs/homelab-ca.pem > /dev/null
+      podman machine ssh -- sudo update-ca-trust
+      podman machine ssh -- sudo systemctl restart podman.service
+    when: podman_reachable.rc == 0 and (podman_homelab_cert.rc | default(1)) != 0
+
   - name: run link script
     shell: "{{ ansible_facts['env']['HOME'] }}/git/dotfiles/mac/link.sh"
 

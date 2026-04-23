@@ -11,7 +11,7 @@
 
 set -e
 
-WOODPECKER_URL="https://woodpecker.home.arpa"
+WOODPECKER_URL="https://woodpecker.toll.is"
 ALLOWED_ORG="Toll-net"
 
 # Must be inside a git repo
