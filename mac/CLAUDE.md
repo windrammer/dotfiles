@@ -14,6 +14,7 @@
 ## Git
 - Do not create commits, amend, push, or run any destructive git operations.
 - When a logical unit of work is done, give me the commit as plain text — `Changed files:` (repo-relative paths) then `Git commit message:` with a flush-left subject + body matching the project's existing style (conventional commits, etc.); no fenced code block, no `git commit`/HEREDOC wrapper.
+- For Conventional Commits, use the bare type — `feat: …` / `fix: …` — never a parenthesised scope like `feat(mac): …`.
 - Never include `Co-Authored-By: Claude ...` trailers (or any AI attribution) in commit messages.
 - Never force-push, reset, or delete branches.
 ## Code style (language defaults, override per-project)

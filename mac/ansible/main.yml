@@ -80,6 +80,13 @@
     shell: brew bundle --file={{ ansible_facts['env']['HOME'] }}/Brewfile --no-upgrade
     ignore_errors: yes
 
+  - name: shim docker -> podman so non-interactive shells (e.g. make) resolve docker
+    file:
+      src: podman
+      dest: /opt/homebrew/bin/docker
+      state: link
+      force: no
+
   - name: install commitlint dependencies globally
     shell: npm install -g @commitlint/cli @commitlint/config-conventional
     ignore_errors: yes
