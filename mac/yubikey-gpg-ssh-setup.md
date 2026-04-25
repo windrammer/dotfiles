@@ -102,6 +102,20 @@ When you plug in a different YubiKey than the one GPG last saw:
 gpg-connect-agent "scd serialno" "learn --force" /bye
 ```
 
+### Signing fails with "No such file or directory"
+
+Symptom: `git commit` or `gpg --clearsign` errors with `signing failed: No such file or directory`, no PIN prompt, no touch request. Usually caused by stale gpg-agent / scdaemon state (e.g., agent started before the public key was imported, or a YubiKey was hot-swapped). Fix:
+
+```bash
+gpgconf --kill all
+```
+
+Next `gpg` invocation relaunches the agent fresh via the shell rc. If it persists, also run `gpg-connect-agent "scd serialno" "learn --force" /bye` to re-bind the card.
+
+### Verifying the card ↔ keyring link
+
+`gpg --card-status` should end with `General key info..: sub  ed25519/B4D72DB9C9D8B4FB ...`. If it says `[none]`, the public key isn't imported — see "Setting Up on a New Machine" step 1.
+
 ### Annual Subkey Renewal (every June 6th)
 
 1. Plug in the IronKey
@@ -174,7 +188,12 @@ Or manually append the contents of `~/.ssh/gpg-yubikey.pub` to `~/.ssh/authorize
 4. Set up `~/.ssh/config` for GitHub
 5. Copy `~/.ssh/gpg-yubikey.pub` for server access
 6. Configure git signing as above
-7. Plug in YubiKey — it just works
+7. Restart the agent so it picks up the new key + pinentry config:
+   ```bash
+   gpgconf --kill all
+   ```
+   The next `gpg` invocation will relaunch it via the shell rc.
+8. Plug in YubiKey — it just works
 
 ---
 
