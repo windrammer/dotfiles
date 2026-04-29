@@ -1,7 +1,7 @@
 [user]
 	name = David Tollman
 	email = mail@toll.is
-	signingkey = B4D72DB9C9D8B4FB
+	signingkey = E74123BC8EB676366AAA3A0D107DB0D05F8CB940
 
 [commit]
 	gpgsign = true
