@@ -1,0 +1,68 @@
+{
+  "theme": "dark",
+  "permissions": {
+    "allow": [
+      "Bash(gh repo *)",
+      "Bash(gh api *)",
+      "Bash(gh pr view*)",
+      "Bash(gh pr list*)",
+      "Bash(gh pr checks*)",
+      "Bash(gh pr diff*)",
+      "Bash(gh issue view*)",
+      "Bash(gh issue list*)",
+      "Bash(gh run view*)",
+      "Bash(gh run list*)",
+
+      "Bash(go build *)",
+      "Bash(go vet *)",
+      "Bash(go test -short *)",
+      "Bash(go list *)",
+      "Bash(go doc *)",
+      "Bash(go mod download)",
+      "Bash(go mod verify)",
+      "Bash(go mod graph)",
+      "Bash(gofmt -l *)",
+      "Bash(gofmt -d *)",
+      "Bash(goimports -l *)",
+      "Bash(goimports -d *)",
+
+      "Bash(helm template *)",
+      "Bash(helm lint *)",
+      "Bash(helm show *)",
+      "Bash(helm search *)",
+      "Bash(helm dep list *)",
+      "Bash(kubectl describe *)",
+      "Bash(kubectl logs *)",
+      "Bash(kubectl explain *)",
+      "Bash(kubectl version)",
+      "Bash(kustomize build *)",
+
+      "Bash(ansible-lint *)",
+      "Bash(ansible-playbook --syntax-check *)",
+      "Bash(ansible-playbook --check *)",
+      "Bash(ansible-inventory *)",
+
+      "Bash(yamllint *)",
+      "Bash(shellcheck *)",
+      "Bash(ruff check *)",
+      "Bash(ruff format --check *)",
+      "Bash(mypy *)",
+      "Bash(pyright *)",
+      "Bash(prettier --check *)",
+      "Bash(eslint --no-fix *)",
+
+      "Bash(podman ps*)",
+      "Bash(podman images*)",
+      "Bash(podman inspect*)",
+      "Bash(docker ps*)",
+      "Bash(docker images*)",
+      "Bash(docker inspect*)",
+
+      "Bash(jq *)",
+      "Bash(yq *)",
+      "Bash(dig *)",
+      "Bash(nslookup *)",
+      "Bash(curl -I *)"
+    ]
+  }
+}

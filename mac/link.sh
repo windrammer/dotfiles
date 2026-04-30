@@ -68,3 +68,9 @@ ln -sf "$DOTFILES_DIR/gpg-yubikey.pub" ~/.ssh/gpg-yubikey.pub
 # Link global CLAUDE.md for Claude Code
 mkdir -p ~/.claude
 ln -sf "$DOTFILES_DIR/CLAUDE.md" ~/.claude/CLAUDE.md
+
+# Link global Claude Code settings (theme + generic permit list)
+if [ -f ~/.claude/settings.json ] && [ ! -L ~/.claude/settings.json ]; then
+  mv ~/.claude/settings.json "$DOTFILES_DIR/oldfiles/claude-settings.json-$DATE"
+fi
+ln -sf "$DOTFILES_DIR/claude-settings.json" ~/.claude/settings.json
