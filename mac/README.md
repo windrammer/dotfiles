@@ -18,6 +18,8 @@ Push and trigger a Woodpecker CI build in one command. The API token is stored i
 
 ```bash
 git pushbuild          # push to origin + trigger Woodpecker pipeline
+woodpecker-build       # trigger Woodpecker pipeline only (no push)
+woodpecker-build main  # trigger build for a specific branch
 ```
 
 **First-time setup — store the token:**

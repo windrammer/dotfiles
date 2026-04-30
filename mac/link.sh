@@ -1,11 +1,7 @@
 #!/bin/zsh
-DATE=$(date +"%Y%m%d%H%M")
 DOTFILES_DIR="$HOME/git/dotfiles/mac"
 
-# Backup and link vimrc
-if [ -f ~/.vimrc ] && [ ! -L ~/.vimrc ]; then
-  mv ~/.vimrc "$DOTFILES_DIR/oldfiles/vimrc-$DATE"
-fi
+# Link vimrc
 ln -sf "$DOTFILES_DIR/vimrc" ~/.vimrc
 
 # Link Neovim init to the same config
@@ -23,9 +19,10 @@ ln -sf "$DOTFILES_DIR/zshrc" ~/.zshrc
 
 # Link git editor wrapper
 mkdir -p ~/.bin
-chmod +x "$DOTFILES_DIR/bin/git-editor-notice" "$DOTFILES_DIR/bin/git-pushbuild"
+chmod +x "$DOTFILES_DIR/bin/git-editor-notice" "$DOTFILES_DIR/bin/git-pushbuild" "$DOTFILES_DIR/bin/woodpecker-build"
 ln -sf "$DOTFILES_DIR/bin/git-editor-notice" ~/.bin/git-editor-notice
 ln -sf "$DOTFILES_DIR/bin/git-pushbuild" ~/.bin/git-pushbuild
+ln -sf "$DOTFILES_DIR/bin/woodpecker-build" ~/.bin/woodpecker-build
 
 # Link git hooks
 mkdir -p ~/.git-hooks
@@ -70,7 +67,4 @@ mkdir -p ~/.claude
 ln -sf "$DOTFILES_DIR/CLAUDE.md" ~/.claude/CLAUDE.md
 
 # Link global Claude Code settings (theme + generic permit list)
-if [ -f ~/.claude/settings.json ] && [ ! -L ~/.claude/settings.json ]; then
-  mv ~/.claude/settings.json "$DOTFILES_DIR/oldfiles/claude-settings.json-$DATE"
-fi
 ln -sf "$DOTFILES_DIR/claude-settings.json" ~/.claude/settings.json

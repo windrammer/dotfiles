@@ -1,0 +1,98 @@
+#!/bin/bash
+# 🏗️ woodpecker-build — trigger a Woodpecker CI build for the current repo
+#
+# Usage: woodpecker-build [branch]
+#
+# Like `git pushbuild`, but does NOT push. Triggers a build for the current
+# branch (or the branch given as the first argument).
+#
+# Only triggers for repos under github.com/Toll-net.
+# Token is stored in macOS Keychain under service "woodpecker-api-token".
+#
+# First-time setup:
+#   security add-generic-password -s woodpecker-api-token -a token -w "<YOUR_TOKEN>"
+
+set -euo pipefail
+
+WOODPECKER_URL="https://woodpecker.toll.is"
+ALLOWED_ORG="Toll-net"
+
+if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+  echo "❌ Not inside a git repository"
+  exit 1
+fi
+
+REMOTE_URL=$(git remote get-url origin 2>/dev/null || true)
+REPO=$(echo "$REMOTE_URL" | sed -E 's#\.git$##; s#.*[:/]([^/]+/[^/]+)$#\1#')
+
+if [ -z "$REPO" ]; then
+  echo "❌ Could not determine repo from remote URL"
+  exit 1
+fi
+
+ORG=$(echo "$REPO" | cut -d/ -f1)
+if [ "$ORG" != "$ALLOWED_ORG" ]; then
+  echo "❌ Repo belongs to '$ORG', not '$ALLOWED_ORG' — skipping build trigger"
+  exit 1
+fi
+
+TOKEN=$(security find-generic-password -s woodpecker-api-token -a token -w 2>/dev/null || true)
+
+if [ -z "$TOKEN" ]; then
+  echo "❌ No Woodpecker token in Keychain (service: woodpecker-api-token)"
+  echo "   Run: security add-generic-password -s woodpecker-api-token -a token -w \"<TOKEN>\""
+  exit 1
+fi
+
+BRANCH="${1:-}"
+if [ -z "$BRANCH" ]; then
+  BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || true)
+fi
+if [ -z "$BRANCH" ] || [ "$BRANCH" = "HEAD" ]; then
+  echo "❌ Could not determine branch to build"
+  exit 1
+fi
+
+LOOKUP=$(curl -s -w "\n%{http_code}" \
+  -H "Authorization: Bearer $TOKEN" \
+  "$WOODPECKER_URL/api/repos/lookup/$REPO" 2>/dev/null || true)
+LOOKUP_CODE=$(echo "$LOOKUP" | tail -1)
+LOOKUP_BODY=$(echo "$LOOKUP" | sed '$d')
+
+if [ "$LOOKUP_CODE" != "200" ]; then
+  echo "❌ Could not look up '$REPO' on Woodpecker (HTTP $LOOKUP_CODE) — is it activated?"
+  exit 1
+fi
+
+REPO_ID=$(echo "$LOOKUP_BODY" | jq -r '.id // empty')
+if [ -z "$REPO_ID" ]; then
+  echo "❌ Could not parse repo ID from Woodpecker lookup response"
+  exit 1
+fi
+
+RESPONSE=$(curl -s -w "\n%{http_code}" \
+  -X POST "$WOODPECKER_URL/api/repos/$REPO_ID/pipelines" \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d "{\"branch\": \"$BRANCH\"}" 2>/dev/null || true)
+
+HTTP_CODE=$(echo "$RESPONSE" | tail -1)
+BODY=$(echo "$RESPONSE" | sed '$d')
+
+case "$HTTP_CODE" in
+  200|201)
+    NUMBER=$(echo "$BODY" | jq -r '.number // empty')
+    if [ -n "$NUMBER" ]; then
+      echo "🏗️ Woodpecker build #$NUMBER triggered for $REPO ($BRANCH)"
+      echo "   $WOODPECKER_URL/repos/$REPO_ID/pipeline/$NUMBER"
+    else
+      echo "⚠️  Unexpected response from Woodpecker (HTTP 200 but no pipeline number)"
+      [ -n "$BODY" ] && echo "   $(echo "$BODY" | head -c 200)"
+    fi
+    ;;
+  *)
+    echo "❌ Woodpecker trigger returned HTTP $HTTP_CODE for $REPO ($BRANCH)"
+    [ -n "$BODY" ] && echo "   $(echo "$BODY" | head -c 200)"
+    exit 1
+    ;;
+esac
