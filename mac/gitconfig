@@ -1,7 +1,14 @@
 [user]
 	name = David Tollman
-	email = mail@toll.is
-	signingkey = E74123BC8EB676366AAA3A0D107DB0D05F8CB940
+
+[include]
+	path = ~/git/dotfiles/mac/gitconfig-work
+
+[includeIf "gitdir:~/git/privat/"]
+	path = ~/git/dotfiles/mac/gitconfig-private
+
+[includeIf "gitdir:~/git/dotfiles/"]
+	path = ~/git/dotfiles/mac/gitconfig-private
 
 [commit]
 	gpgsign = true
