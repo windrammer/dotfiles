@@ -55,6 +55,7 @@ ln -sf "$DOTFILES_DIR/gitconfig" ~/.gitconfig
 # Link gpg-agent config
 mkdir -p ~/.gnupg
 ln -sf "$DOTFILES_DIR/gpg-agent.conf" ~/.gnupg/gpg-agent.conf
+ln -sf "$DOTFILES_DIR/gpg.conf" ~/.gnupg/gpg.conf
 
 # Link SSH config and GPG-derived public key
 mkdir -p ~/.ssh
