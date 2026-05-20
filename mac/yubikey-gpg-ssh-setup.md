@@ -10,11 +10,11 @@ Complete GPG identity with master key + subkeys, backed up to encrypted USB, loa
 
 | Item | Value |
 |------|-------|
-| Master Key | `ed25519/0xEECA864712AA15B0` |
-| Fingerprint | `D1E6 108F 1BF3 C6AF 53C0 6986 EECA 8647 12AA 15B0` |
-| Signing Subkey | `ed25519/0xB4D72DB9C9D8B4FB` [S] |
-| Encryption Subkey | `cv25519/0x94526BD7E1B93819` [E] |
-| Authentication Subkey | `ed25519/0x341CE9B00DE56660` [A] |
+| Master Key | `ed25519/0x107DB0D05F8CB940` |
+| Fingerprint | `E741 23BC 8EB6 7636 6AAA 3A0D 107D B0D0 5F8C B940` |
+| Signing Subkey | `ed25519/0x9100316536D69975` [S] |
+| Encryption Subkey | `cv25519/0x2176B195185286D8` [E] |
+| Authentication Subkey | `ed25519/0xC72B8EF4F62E42CF` [A] |
 | Subkey Expiry | 2027-06-06 (Swedish National Day, renewed annually) |
 | UIDs | `David Tollman <mail@toll.is>`, `David Tollman <david.tollman@playgroundtech.io>` |
 
@@ -39,21 +39,20 @@ Master Key (ed25519, certify only, no expiry, offline on IronKey)
 - Touch policy: enabled for signing, encryption, and authentication
 - OpenPGP applet only — FIDO2 is configured separately per key
 
-## SSH Split Workflow
+## SSH Authentication
 
-- **GitHub push/pull** → regular SSH key (`~/.ssh/id_ed25519`), no YubiKey
-- **SSH to servers** → GPG auth subkey via YubiKey, touch required
+Git uses a per-directory split driven by `core.sshCommand` in the included gitconfigs (`gitconfig-work` is unconditional; `gitconfig-private` overrides for the private paths):
+
+- **Work repos (default)** → GPG auth subkey via YubiKey, touch required
+- **Private repos (`~/git/privat/`, `~/git/dotfiles/`)** → `~/.ssh/id_ed25519`, no YubiKey
+- **SSH to servers** → GPG auth subkey via YubiKey (served by `gpg-agent` over `SSH_AUTH_SOCK`)
 - **Git commit signing** → GPG signing subkey via YubiKey, touch required
 
-GitHub is configured in `~/.ssh/config` to bypass `gpg-agent`:
+The YubiKey-derived SSH pubkey lives at `~/.ssh/gpg-yubikey.pub`. Regenerate with `gpg --export-ssh-key 0xC72B8EF4F62E42CF` after subkey rotation.
 
-```
-Host github.com
-    IdentityFile ~/.ssh/id_ed25519
-    IdentitiesOnly yes
-```
+Touch is required per operation; the PIN is prompted once after cache expiry (10 min idle / 2 hr hard cap — see `gpg-agent.conf`).
 
-GPG SSH public key for servers is saved at `~/.ssh/gpg-yubikey.pub`.
+The work GitHub org enforces SAML SSO on SSH keys: after adding `gpg-yubikey.pub` to GitHub, click **Configure SSO** on that key entry and authorize it for the `playgroundtech` org. Without this, pushes to work repos fail with `you must use the HTTPS remote with a personal access token or SSH with an SSH key and passphrase that has been authorized for this organization`.
 
 ## Backup Contents (on IronKey at `/Volumes/Secure_Key/gpg-backup/`)
 
@@ -69,11 +68,13 @@ GPG SSH public key for servers is saved at `~/.ssh/gpg-yubikey.pub`.
 ### `~/.gnupg/gpg-agent.conf`
 
 ```
-default-cache-ttl 3600
-max-cache-ttl 14400
 pinentry-program /opt/homebrew/bin/pinentry-mac
 enable-ssh-support
+default-cache-ttl 600
+max-cache-ttl 7200
 ```
+
+Tracked in dotfiles and symlinked by `link.sh`.
 
 ### Shell rc (`~/.zshrc` or equivalent)
 
@@ -85,7 +86,7 @@ export SSH_AUTH_SOCK=$(gpgconf --list-dirs agent-ssh-socket)
 ### Git global config
 
 ```bash
-git config --global user.signingkey B4D72DB9C9D8B4FB
+git config --global user.signingkey 9100316536D69975
 git config --global commit.gpgsign true
 git config --global tag.gpgsign true
 ```
@@ -114,7 +115,7 @@ Next `gpg` invocation relaunches the agent fresh via the shell rc. If it persist
 
 ### Verifying the card ↔ keyring link
 
-`gpg --card-status` should end with `General key info..: sub  ed25519/B4D72DB9C9D8B4FB ...`. If it says `[none]`, the public key isn't imported — see "Setting Up on a New Machine" step 1.
+`gpg --card-status` should end with `General key info..: sub  ed25519/9100316536D69975 ...` (signing subkey). If it says `[none]`, the public key isn't imported — see "Setting Up on a New Machine" step 1.
 
 ### Annual Subkey Renewal (every June 6th)
 
@@ -125,17 +126,17 @@ Next `gpg` invocation relaunches the agent fresh via the shell rc. If it persist
    ```
 3. Extend subkey expiration:
    ```bash
-   gpg --edit-key --expert 0xEECA864712AA15B0
+   gpg --edit-key --expert 0x107DB0D05F8CB940
    ```
    For each subkey: `key N` → `expire` → set to next year's `YYYY-06-06` → `key N` to deselect. Then `save`.
 4. Update the backup:
    ```bash
-   gpg --export-secret-keys --armor 0xEECA864712AA15B0 > /Volumes/Secure_Key/gpg-backup/secret-keys.asc
-   gpg --export --armor 0xEECA864712AA15B0 > /Volumes/Secure_Key/gpg-backup/public-key.asc
+   gpg --export-secret-keys --armor 0x107DB0D05F8CB940 > /Volumes/Secure_Key/gpg-backup/secret-keys.asc
+   gpg --export --armor 0x107DB0D05F8CB940 > /Volumes/Secure_Key/gpg-backup/public-key.asc
    ```
 5. Update public key on GitHub:
    ```bash
-   gpg --export --armor 0xEECA864712AA15B0 | pbcopy
+   gpg --export --armor 0x107DB0D05F8CB940 | pbcopy
    ```
    GitHub → Settings → SSH and GPG keys → delete old → add new.
 6. No need to touch the YubiKeys — subkeys are unchanged.

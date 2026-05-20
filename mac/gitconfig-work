@@ -1,3 +1,6 @@
 [user]
 	email = david.tollman@playgroundtech.io
 	signingkey = E74123BC8EB676366AAA3A0D107DB0D05F8CB940
+
+[core]
+	sshCommand = ssh -i ~/.ssh/gpg-yubikey.pub -o IdentitiesOnly=yes
