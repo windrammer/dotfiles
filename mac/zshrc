@@ -93,6 +93,9 @@ alias lt='lsd --tree'
 alias vim='nvim'
 alias vi='nvim'
 
+alias pgt-ecr-private="aws ecr --profile pgt-ecr get-login-password --region eu-north-1 | docker login --username AWS --password-stdin 797233058602.dkr.ecr.eu-north-1.amazonaws.com"
+alias pgt-ecr-public="aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws"
+
 # Deploy YubiKey SSH public key to a server
 ssh-add-yubikey() { ssh-copy-id -f -i ~/.ssh/gpg-yubikey.pub "$@"; }
 

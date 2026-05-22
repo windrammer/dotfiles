@@ -1,3 +1,54 @@
-#!/bin/bash
-# Get staged files and scan them with trufflehog
-git diff --cached --diff-filter=d --name-only -z | xargs -0 trufflehog filesystem --exclude-paths=$HOME/.trufflehog-global-ignore --no-verification --fail
+#!/usr/bin/env bash
+# Pre-commit hook:
+#   1. Block binary or oversized files from being committed.
+#   2. Run trufflehog secret scan on staged files.
+set -euo pipefail
+
+MAX_FILE_SIZE_KB="${MAX_FILE_SIZE_KB:-5120}"
+ALLOW_BINARY="${ALLOW_BINARY:-0}"
+ALLOW_LARGE="${ALLOW_LARGE:-0}"
+
+violations=()
+
+while IFS= read -r -d '' path; do
+  # Skip files managed by Git LFS — binary by design.
+  if git check-attr filter -- "$path" 2>/dev/null | grep -q ': lfs$'; then
+    continue
+  fi
+
+  if [[ "$ALLOW_BINARY" != "1" ]]; then
+    added=$(git diff --cached --numstat -- "$path" | awk 'NR==1 {print $1}')
+    if [[ "$added" == "-" ]]; then
+      violations+=("binary: $path")
+      continue
+    fi
+  fi
+
+  if [[ "$ALLOW_LARGE" != "1" ]]; then
+    size_bytes=$(git cat-file -s ":$path" 2>/dev/null || echo 0)
+    if (( size_bytes > MAX_FILE_SIZE_KB * 1024 )); then
+      kb=$(( size_bytes / 1024 ))
+      violations+=("large (${kb} KB > ${MAX_FILE_SIZE_KB} KB): $path")
+    fi
+  fi
+done < <(git diff --cached --diff-filter=d --name-only -z)
+
+if (( ${#violations[@]} > 0 )); then
+  printf 'pre-commit blocked the following files:\n' >&2
+  printf '  %s\n' "${violations[@]}" >&2
+  printf '\nOverride if intentional:\n' >&2
+  printf '  ALLOW_BINARY=1 git commit ...        # allow binary files\n' >&2
+  printf '  ALLOW_LARGE=1  git commit ...        # allow oversized files\n' >&2
+  printf '  MAX_FILE_SIZE_KB=N git commit ...    # raise size threshold (default %s)\n' "$MAX_FILE_SIZE_KB" >&2
+  printf '\nFor legitimate binaries, prefer Git LFS:\n' >&2
+  printf '  echo "path filter=lfs diff=lfs merge=lfs -text" >> .gitattributes\n' >&2
+  exit 1
+fi
+
+# Secret scan staged files (skip when only deletions were staged).
+if [[ -n "$(git diff --cached --diff-filter=d --name-only)" ]]; then
+  git diff --cached --diff-filter=d --name-only -z \
+    | xargs -0 trufflehog filesystem \
+        --exclude-paths="$HOME/.trufflehog-global-ignore" \
+        --no-verification --fail
+fi
