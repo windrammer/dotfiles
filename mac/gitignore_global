@@ -12,3 +12,5 @@ Thumbs.db
 
 # git-diagnose output
 REPO-DIAGNOSTICS-*.md
+
+**/.claude/settings.local.json
