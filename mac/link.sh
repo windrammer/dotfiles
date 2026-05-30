@@ -69,3 +69,22 @@ ln -sf "$DOTFILES_DIR/CLAUDE.md" ~/.claude/CLAUDE.md
 
 # Link global Claude Code settings (theme + generic permit list)
 ln -sf "$DOTFILES_DIR/claude-settings.json" ~/.claude/settings.json
+
+# Install iTerm2 profile via Dynamic Profiles.
+# The exported JSON is a single profile (has Guid, no "Profiles" wrapper),
+# so wrap it before dropping it where iTerm picks it up automatically.
+ITERM_PROFILE_SRC="$DOTFILES_DIR/iterm profile from dotfiles.json"
+ITERM_DYNAMIC_DIR="$HOME/Library/Application Support/iTerm2/DynamicProfiles"
+if [[ -f "$ITERM_PROFILE_SRC" ]]; then
+  mkdir -p "$ITERM_DYNAMIC_DIR"
+  ITERM_GUID=$(python3 -c '
+import json, sys
+p = json.load(open(sys.argv[1]))
+json.dump({"Profiles": [p]}, open(sys.argv[2], "w"), indent=2)
+print(p["Guid"])
+' "$ITERM_PROFILE_SRC" "$ITERM_DYNAMIC_DIR/dotfiles.json")
+  if [[ -n "$ITERM_GUID" ]]; then
+    defaults write com.googlecode.iterm2 "Default Bookmark Guid" "$ITERM_GUID"
+    echo "iTerm profile installed (guid $ITERM_GUID). Restart iTerm to apply."
+  fi
+fi
