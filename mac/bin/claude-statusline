@@ -1,0 +1,88 @@
+#!/usr/bin/env bash
+# Claude Code statusline. Renders a single bottom-left line composed of:
+#   <model> <effort> |  <branch>[*] | <used>/<total>, <pct>%
+# e.g. `Opus 4.8 xhigh |  master* | 12.3k/1m, 12%`
+#
+# Reads the statusline JSON from stdin. Every segment is optional and is
+# skipped when its data is unavailable (e.g. context fields are empty before
+# the first API response, or the cwd is not a git repo). The context total is
+# read from the JSON, so it stays correct if the model's context window changes.
+set -euo pipefail
+
+command -v jq >/dev/null 2>&1 || exit 0
+
+input="$(cat)"
+
+jget() { printf '%s' "$input" | jq -r "$1 // empty"; }
+
+# Humanize a token count: 12345 -> 12.3k, 1000000 -> 1m, 999 -> 999.
+# LC_NUMERIC=C keeps the decimal separator a dot regardless of locale.
+humanize() {
+  LC_NUMERIC=C awk -v n="$1" 'BEGIN {
+    if (n >= 1000000) { v = n / 1000000; s = "m" }
+    else if (n >= 1000) { v = n / 1000; s = "k" }
+    else { printf "%d", n; exit }
+    r = sprintf("%.1f", v)
+    sub(/\.0$/, "", r)   # 1.0m -> 1m
+    printf "%s%s", r, s
+  }'
+}
+
+# ANSI colors (statusline renders escape codes).
+RESET=$'\033[0m'
+GREEN=$'\033[32m'
+YELLOW=$'\033[33m'
+RED=$'\033[31m'
+DIM=$'\033[2m'
+
+segments=()
+
+# ── Model + effort ───────────────────────────────────────────
+model="$(jget '.model.display_name')"
+effort="$(jget '.effort.level')"
+if [[ -n "$model" ]]; then
+  if [[ -n "$effort" ]]; then
+    segments+=("${DIM}${model} ${effort}${RESET}")
+  else
+    segments+=("${DIM}${model}${RESET}")
+  fi
+fi
+
+# ── Context window usage (color-coded by fullness) ───────────
+used="$(jget '.context_window.total_input_tokens')"
+total="$(jget '.context_window.context_window_size')"
+pct="$(jget '.context_window.used_percentage')"
+if [[ -n "$used" && -n "$total" ]]; then
+  pct="${pct%%.*}"   # drop any decimal portion
+  pct="${pct:-0}"
+  if (( pct >= 85 )); then
+    color="$RED"
+  elif (( pct >= 60 )); then
+    color="$YELLOW"
+  else
+    color="$GREEN"
+  fi
+  segments+=("${color}$(humanize "$used")/$(humanize "$total"), ${pct}%${RESET}")
+fi
+
+# ── Git branch + dirty marker ────────────────────────────────
+dir="$(jget '.workspace.current_dir')"
+[[ -z "$dir" ]] && dir="$PWD"
+if branch="$(git -C "$dir" symbolic-ref --quiet --short HEAD 2>/dev/null)" \
+   || branch="$(git -C "$dir" rev-parse --short HEAD 2>/dev/null)"; then
+  dirty=""
+  [[ -n "$(git -C "$dir" status --porcelain 2>/dev/null)" ]] && dirty="*"
+  segments+=(" ${branch}${dirty}")
+fi
+
+# Join non-empty segments with " | ".
+out=""
+for seg in "${segments[@]}"; do
+  if [[ -z "$out" ]]; then
+    out="$seg"
+  else
+    out="${out} ${DIM}|${RESET} ${seg}"
+  fi
+done
+
+printf '%s' "$out"

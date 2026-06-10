@@ -43,6 +43,10 @@ ln -sf "$DOTFILES_DIR/git-commit-template" ~/.git-commit-template
 chmod +x "$DOTFILES_DIR/bin/git-diagnose"
 ln -sf "$DOTFILES_DIR/bin/git-diagnose" ~/.bin/git-diagnose
 
+# Link Claude Code statusline script
+chmod +x "$DOTFILES_DIR/bin/claude-statusline"
+ln -sf "$DOTFILES_DIR/bin/claude-statusline" ~/.bin/claude-statusline
+
 # Link global gitignore
 ln -sf "$DOTFILES_DIR/gitignore_global" ~/.gitignore_global
 

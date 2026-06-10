@@ -193,6 +193,82 @@ git() {
   fi
 }
 
+# Wrap brew to keep ~/Brewfile (symlink into dotfiles) in sync automatically.
+# install/reinstall  -> append `brew "x"` or `cask "x"` if not already present
+# uninstall/remove   -> drop the matching brew/cask line
+# tap                -> append `tap "x"` if not already present
+# Only runs when the real brew command succeeds. Writes through the symlink
+# with `>>` / `command cat >` so the link into the dotfiles repo is preserved.
+BREWFILE="$HOME/Brewfile"
+
+brew() {
+  local subcmd="$1"
+  command brew "$@"
+  local exit_code=$?
+  if [[ $exit_code -ne 0 || ! -f "$BREWFILE" ]]; then
+    return $exit_code
+  fi
+
+  local arg pkg
+  case "$subcmd" in
+    install|reinstall)
+      shift
+      local keyword="brew"
+      local -a pkgs=()
+      for arg in "$@"; do
+        case "$arg" in
+          --cask|--casks) keyword="cask" ;;
+          -*) ;;            # other flags
+          *://*|*.rb) ;;    # URLs / local formula files
+          *) pkgs+=("$arg") ;;
+        esac
+      done
+      for pkg in "${pkgs[@]}"; do
+        if ! grep -Fxq "${keyword} \"${pkg}\"" "$BREWFILE"; then
+          echo "${keyword} \"${pkg}\"" >> "$BREWFILE"
+          printf '\033[0;32m📦 Added %s "%s" to Brewfile\033[0m\n' "$keyword" "$pkg"
+        fi
+      done
+      ;;
+    uninstall|remove|rm)
+      shift
+      local -a pkgs=()
+      for arg in "$@"; do
+        case "$arg" in
+          -*) ;;
+          *) pkgs+=("$arg") ;;
+        esac
+      done
+      for pkg in "${pkgs[@]}"; do
+        local line_brew="brew \"${pkg}\"" line_cask="cask \"${pkg}\""
+        if grep -Fxq "$line_brew" "$BREWFILE" || grep -Fxq "$line_cask" "$BREWFILE"; then
+          local tmp
+          tmp="$(mktemp)"
+          grep -Fxv -e "$line_brew" -e "$line_cask" "$BREWFILE" > "$tmp"
+          command cat "$tmp" > "$BREWFILE"
+          rm -f "$tmp"
+          printf '\033[0;33m🗑  Removed "%s" from Brewfile\033[0m\n' "$pkg"
+        fi
+      done
+      ;;
+    tap)
+      shift
+      for arg in "$@"; do
+        case "$arg" in
+          */*)
+            if ! grep -Fxq "tap \"${arg}\"" "$BREWFILE"; then
+              echo "tap \"${arg}\"" >> "$BREWFILE"
+              printf '\033[0;32m🔗 Added tap "%s" to Brewfile\033[0m\n' "$arg"
+            fi
+            ;;
+        esac
+      done
+      ;;
+  esac
+
+  return $exit_code
+}
+
 # source ~/powerlevel10k/powerlevel10k.zsh-theme
 
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.

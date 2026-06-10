@@ -26,3 +26,5 @@
 
 [init]
 	defaultBranch = main
+[url "git@github.com:playgroundtech/"]
+	insteadOf = https://github.com/playgroundtech/

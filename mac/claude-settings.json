@@ -1,5 +1,4 @@
 {
-  "theme": "dark",
   "permissions": {
     "allow": [
       "Bash(gh repo *)",
@@ -12,7 +11,6 @@
       "Bash(gh issue list*)",
       "Bash(gh run view*)",
       "Bash(gh run list*)",
-
       "Bash(go build *)",
       "Bash(go vet *)",
       "Bash(go test -short *)",
@@ -25,7 +23,6 @@
       "Bash(gofmt -d *)",
       "Bash(goimports -l *)",
       "Bash(goimports -d *)",
-
       "Bash(helm template *)",
       "Bash(helm lint *)",
       "Bash(helm show *)",
@@ -36,12 +33,10 @@
       "Bash(kubectl explain *)",
       "Bash(kubectl version)",
       "Bash(kustomize build *)",
-
       "Bash(ansible-lint *)",
       "Bash(ansible-playbook --syntax-check *)",
       "Bash(ansible-playbook --check *)",
       "Bash(ansible-inventory *)",
-
       "Bash(yamllint *)",
       "Bash(shellcheck *)",
       "Bash(ruff check *)",
@@ -50,19 +45,23 @@
       "Bash(pyright *)",
       "Bash(prettier --check *)",
       "Bash(eslint --no-fix *)",
-
       "Bash(podman ps*)",
       "Bash(podman images*)",
       "Bash(podman inspect*)",
       "Bash(docker ps*)",
       "Bash(docker images*)",
       "Bash(docker inspect*)",
-
       "Bash(jq *)",
       "Bash(yq *)",
       "Bash(dig *)",
       "Bash(nslookup *)",
       "Bash(curl -I *)"
     ]
+  },
+  "effortLevel": "xhigh",
+  "theme": "dark",
+  "statusLine": {
+    "type": "command",
+    "command": "~/.bin/claude-statusline"
   }
 }
