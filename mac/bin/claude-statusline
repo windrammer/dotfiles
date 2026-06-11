@@ -1,19 +1,32 @@
 #!/usr/bin/env bash
-# Claude Code statusline. Renders a single bottom-left line composed of:
-#   <model> <effort> |  <branch>[*] | <used>/<total>, <pct>%
-# e.g. `Opus 4.8 xhigh |  master* | 12.3k/1m, 12%`
+# Claude Code statusline. Renders a single bottom-left line:
+#   <path>  |  <model> <effort>  |  <ctx used/total, pct%>  |   <branch><counts>
 #
-# Reads the statusline JSON from stdin. Every segment is optional and is
-# skipped when its data is unavailable (e.g. context fields are empty before
-# the first API response, or the cwd is not a git repo). The context total is
-# read from the JSON, so it stays correct if the model's context window changes.
+# Path: ~-relative. Parent dirs *above* the repo root are shortened to their
+# shortest unique prefix (p10k-style) and dimmed; the repo-root dir is shown
+# full in bold magenta; in-repo dirs stay full but are shortened from the left
+# (never the root, never the current dir) if the line would overflow $COLUMNS.
+# Git: branch plus +staged *modified ?untracked counts (zeros omitted).
+#
+# Every segment is optional and skipped when its data is unavailable (e.g.
+# context fields are empty before the first API response, cwd is not a repo).
+# The context total is read from the JSON, so it stays correct if the model's
+# context window changes.
 set -euo pipefail
+shopt -s nullglob
 
 command -v jq >/dev/null 2>&1 || exit 0
 
 input="$(cat)"
-
 jget() { printf '%s' "$input" | jq -r "$1 // empty"; }
+
+# ── Colors (statusline renders ANSI escape codes) ────────────
+RESET=$'\033[0m'
+DIM=$'\033[2m'
+GREEN=$'\033[32m'
+YELLOW=$'\033[33m'
+RED=$'\033[31m'
+ROOTC=$'\033[1;38;5;161m'   # bold dark pink — the repo-root marker (readable on the light statusline bg)
 
 # Humanize a token count: 12345 -> 12.3k, 1000000 -> 1m, 999 -> 999.
 # LC_NUMERIC=C keeps the decimal separator a dot regardless of locale.
@@ -23,28 +36,50 @@ humanize() {
     else if (n >= 1000) { v = n / 1000; s = "k" }
     else { printf "%d", n; exit }
     r = sprintf("%.1f", v)
-    sub(/\.0$/, "", r)   # 1.0m -> 1m
+    sub(/\.0$/, "", r)
     printf "%s%s", r, s
   }'
 }
 
-# ANSI colors (statusline renders escape codes).
-RESET=$'\033[0m'
-GREEN=$'\033[32m'
-YELLOW=$'\033[33m'
-RED=$'\033[31m'
-DIM=$'\033[2m'
+# Shortest unique prefix of dir $2 among the sibling dirs in $1 (p10k-style).
+abbrev() {
+  local parent="$1" name="$2" len=1 prefix
+  local -a matches
+  (( ${#name} <= 1 )) && { printf '%s' "$name"; return 0; }
+  while (( len < ${#name} )); do
+    prefix="${name:0:len}"
+    matches=( "$parent/$prefix"*/ )
+    (( ${#matches[@]} <= 1 )) && break
+    len=$(( len + 1 ))
+  done
+  printf '%s' "${name:0:len}"
+}
 
-segments=()
+# Split absolute path $1 into the global array PARTS (no empty components).
+PARTS=()
+path_parts() {
+  PARTS=()
+  local IFS='/' x
+  local -a raw
+  read -ra raw <<< "$1"
+  for x in "${raw[@]}"; do
+    [[ -n "$x" ]] && PARTS+=("$x")
+  done
+}
+
+# Build the non-path segments first so we know how much width they consume.
+seg_colored=()
+seg_plain=()
+add_seg() { seg_colored+=("$1"); seg_plain+=("$2"); }
 
 # ── Model + effort ───────────────────────────────────────────
 model="$(jget '.model.display_name')"
 effort="$(jget '.effort.level')"
 if [[ -n "$model" ]]; then
   if [[ -n "$effort" ]]; then
-    segments+=("${DIM}${model} ${effort}${RESET}")
+    add_seg "${DIM}${model} ${effort}${RESET}" "${model} ${effort}"
   else
-    segments+=("${DIM}${model}${RESET}")
+    add_seg "${DIM}${model}${RESET}" "${model}"
   fi
 fi
 
@@ -53,36 +88,124 @@ used="$(jget '.context_window.total_input_tokens')"
 total="$(jget '.context_window.context_window_size')"
 pct="$(jget '.context_window.used_percentage')"
 if [[ -n "$used" && -n "$total" ]]; then
-  pct="${pct%%.*}"   # drop any decimal portion
-  pct="${pct:-0}"
-  if (( pct >= 85 )); then
-    color="$RED"
-  elif (( pct >= 60 )); then
-    color="$YELLOW"
-  else
-    color="$GREEN"
+  pct="${pct%%.*}"; pct="${pct:-0}"
+  if   (( pct >= 85 )); then color="$RED"
+  elif (( pct >= 60 )); then color="$YELLOW"
+  else                       color="$GREEN"
   fi
-  segments+=("${color}$(humanize "$used")/$(humanize "$total"), ${pct}%${RESET}")
+  ctx="$(humanize "$used")/$(humanize "$total"), ${pct}%"
+  add_seg "${color}${ctx}${RESET}" "$ctx"
 fi
 
-# ── Git branch + dirty marker ────────────────────────────────
-dir="$(jget '.workspace.current_dir')"
-[[ -z "$dir" ]] && dir="$PWD"
-if branch="$(git -C "$dir" symbolic-ref --quiet --short HEAD 2>/dev/null)" \
-   || branch="$(git -C "$dir" rev-parse --short HEAD 2>/dev/null)"; then
-  dirty=""
-  [[ -n "$(git -C "$dir" status --porcelain 2>/dev/null)" ]] && dirty="*"
-  segments+=(" ${branch}${dirty}")
+# ── Git branch + counts ──────────────────────────────────────
+cwd="$(jget '.workspace.current_dir')"
+[[ -z "$cwd" ]] && cwd="$PWD"
+root=""
+root="$(command git -C "$cwd" rev-parse --show-toplevel 2>/dev/null)" || root=""
+if [[ -n "$root" ]]; then
+  branch=""
+  branch="$(command git -C "$cwd" symbolic-ref --quiet --short HEAD 2>/dev/null)" \
+    || branch="$(command git -C "$cwd" rev-parse --short HEAD 2>/dev/null)" || branch=""
+  staged=0; modified=0; untracked=0
+  while IFS= read -r line; do
+    [[ -z "$line" ]] && continue
+    if [[ "$line" == '??'* ]]; then untracked=$(( untracked + 1 )); continue; fi
+    x="${line:0:1}"; y="${line:1:1}"
+    [[ "$x" != ' ' && "$x" != '?' ]] && staged=$(( staged + 1 ))
+    [[ "$y" == 'M' || "$y" == 'D' ]] && modified=$(( modified + 1 ))
+  done < <(command git -C "$cwd" status --porcelain 2>/dev/null || true)
+  counts=""
+  (( staged    > 0 )) && counts+=" +${staged}"
+  (( modified  > 0 )) && counts+=" *${modified}"
+  (( untracked > 0 )) && counts+=" ?${untracked}"
+  if [[ -n "$branch" ]]; then
+    add_seg " ${branch}${counts}" " ${branch}${counts}"
+  fi
 fi
 
-# Join non-empty segments with " | ".
-out=""
-for seg in "${segments[@]}"; do
-  if [[ -z "$out" ]]; then
-    out="$seg"
-  else
-    out="${out} ${DIM}|${RESET} ${seg}"
+# Width consumed by the non-path segments, including a " | " before each
+# (the path is rendered first, so every other segment gets a leading sep).
+SEP_W=3
+other_w=0
+for p in "${seg_plain[@]}"; do
+  other_w=$(( other_w + SEP_W + ${#p} ))
+done
+
+# ── Path segment (built last, to the remaining width) ────────
+path_colored=""
+path_plain=""
+path_parts "$cwd";  cwd_parts=( "${PARTS[@]}" ); cwd_n=${#cwd_parts[@]}
+path_parts "$HOME"; home_parts=( "${PARTS[@]}" ); home_n=${#home_parts[@]}
+
+under_home=true
+if (( cwd_n < home_n )); then under_home=false; fi
+if $under_home; then
+  for (( i = 0; i < home_n; i++ )); do
+    [[ "${cwd_parts[i]}" != "${home_parts[i]}" ]] && { under_home=false; break; }
+  done
+fi
+
+root_n=0
+if [[ -n "$root" ]]; then
+  path_parts "$root"; root_n=${#PARTS[@]}
+fi
+
+if $under_home; then start=$home_n; marker="~"; else start=0; marker=""; fi
+
+# Collect displayed segments: name, absolute parent, role, leaf flag, display.
+d_name=() d_parent=() d_role=() d_leaf=() d_disp=()
+for (( i = start; i < cwd_n; i++ )); do
+  name="${cwd_parts[i]}"
+  parent="/$(IFS=/; echo "${cwd_parts[*]:0:i}")"
+  if   (( root_n > 0 && i <  root_n - 1 )); then role="parent"
+  elif (( root_n > 0 && i == root_n - 1 )); then role="root"
+  elif (( root_n > 0 ));                    then role="inrepo"
+  else                                           role="norepo"
   fi
+  leaf=0; (( i == cwd_n - 1 )) && leaf=1
+  case "$role" in
+    parent)            disp="$(abbrev "$parent" "$name")" ;;
+    norepo) if (( leaf )); then disp="$name"; else disp="$(abbrev "$parent" "$name")"; fi ;;
+    *)                 disp="$name" ;;   # root + inrepo start full
+  esac
+  d_name+=("$name"); d_parent+=("$parent"); d_role+=("$role")
+  d_leaf+=("$leaf"); d_disp+=("$disp")
+done
+
+plain_path() {
+  local s="$marker" j
+  for (( j = 0; j < ${#d_disp[@]}; j++ )); do s+="/${d_disp[j]}"; done
+  printf '%s' "$s"
+}
+
+# Shrink in-repo, non-leaf dirs (leftmost first) until the path fits.
+COLS=${COLUMNS:-120}
+budget=$(( COLS - other_w - 1 ))
+path_plain="$(plain_path)"
+if (( budget > 10 )); then
+  for (( j = 0; j < ${#d_disp[@]}; j++ )); do
+    (( ${#path_plain} <= budget )) && break
+    [[ "${d_role[j]}" == "inrepo" && "${d_leaf[j]}" -eq 0 ]] || continue
+    d_disp[j]="$(abbrev "${d_parent[j]}" "${d_name[j]}")"
+    path_plain="$(plain_path)"
+  done
+fi
+
+# Render the path with per-segment colors.
+path_colored="${DIM}${marker}${RESET}"
+for (( j = 0; j < ${#d_disp[@]}; j++ )); do
+  case "${d_role[j]}" in
+    root)            path_colored+="/${ROOTC}${d_disp[j]}${RESET}" ;;
+    parent)          path_colored+="/${DIM}${d_disp[j]}${RESET}" ;;
+    norepo) if (( d_leaf[j] )); then path_colored+="/${d_disp[j]}"; else path_colored+="/${DIM}${d_disp[j]}${RESET}"; fi ;;
+    *)               path_colored+="/${d_disp[j]}" ;;
+  esac
+done
+
+# ── Assemble: path first, then the rest joined by " | " ──────
+out="$path_colored"
+for (( k = 0; k < ${#seg_colored[@]}; k++ )); do
+  out+=" ${DIM}|${RESET} ${seg_colored[k]}"
 done
 
 printf '%s' "$out"

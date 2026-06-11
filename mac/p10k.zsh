@@ -31,7 +31,7 @@
   # The list of segments shown on the left. Fill it with the most important segments.
   typeset -g POWERLEVEL9K_LEFT_PROMPT_ELEMENTS=(
     os_icon                 # os identifier
-    dir                     # current directory
+    reporoot_dir            # current directory (custom: only the git root highlighted)
     vcs                     # git status
     # prompt_char           # prompt symbol
   )
@@ -218,6 +218,10 @@
   typeset -g POWERLEVEL9K_DIR_SHORTENED_FOREGROUND=250
   # Color of the anchor directory segments. Anchor segments are never shortened. The first
   # segment is always an anchor.
+  # NOTE: the built-in `dir` segment is replaced by the custom `reporoot_dir`
+  # segment (defined further down). This block is kept pristine as a fallback:
+  # swap `reporoot_dir` back to `dir` in POWERLEVEL9K_LEFT_PROMPT_ELEMENTS to
+  # restore stock behavior.
   typeset -g POWERLEVEL9K_DIR_ANCHOR_FOREGROUND=255
   # Display anchor directory segments in bold.
   typeset -g POWERLEVEL9K_DIR_ANCHOR_BOLD=true
@@ -1693,6 +1697,105 @@
   typeset -g POWERLEVEL9K_EXAMPLE_FOREGROUND=3
   typeset -g POWERLEVEL9K_EXAMPLE_BACKGROUND=1
   # typeset -g POWERLEVEL9K_EXAMPLE_VISUAL_IDENTIFIER_EXPANSION='⭐'
+
+  #################[ reporoot_dir: path with only the git repo root highlighted ]#################
+  # Custom replacement for the built-in `dir` segment. Shows the ~-relative
+  # path; directories above the git repo root are shortened to their shortest
+  # unique prefix and dimmed; the repo-root directory is bold pink (matching
+  # the Claude Code statusline); in-repo dirs and the current dir are shown in
+  # full. Only the repo root is highlighted (home ~ is not). Trade-off vs the
+  # built-in dir: no tab-completion of shortened segments and no
+  # writable/non-existent indicator.
+
+  # Shortest unique prefix of dir $2 among the sibling dirs in $1; result in REPLY.
+  function _reporoot_abbrev() {
+    emulate -L zsh
+    setopt local_options extended_glob
+    local parent=$1 name=$2
+    if (( ${#name} <= 1 )); then REPLY=$name; return; fi
+    local len=1
+    local -a m
+    while (( len < ${#name} )); do
+      m=( $parent/${name[1,len]}*(/N) )
+      (( ${#m} <= 1 )) && break
+      (( len++ ))
+    done
+    REPLY=${name[1,len]}
+  }
+
+  function prompt_reporoot_dir() {
+    emulate -L zsh
+    setopt local_options extended_glob
+    local cwd=$PWD home=$HOME
+
+    # Find the repo root by walking up for a .git entry (no subprocess).
+    local root='' d=$cwd
+    while true; do
+      [[ -e $d/.git ]] && { root=$d; break }
+      [[ $d == / ]] && break
+      d=${d:h}
+    done
+
+    # Split absolute paths into components (leading slash stripped first).
+    local -a comps home_comps root_comps
+    comps=( ${(s:/:)${cwd#/}} )
+    home_comps=( ${(s:/:)${home#/}} )
+    local cwd_n=${#comps} home_n=${#home_comps} root_n=0
+    [[ -n $root ]] && { root_comps=( ${(s:/:)${root#/}} ); root_n=${#root_comps} }
+
+    # Is the cwd inside $HOME?
+    local under_home=1 i
+    (( cwd_n < home_n )) && under_home=0
+    if (( under_home )); then
+      for (( i=1; i<=home_n; i++ )); do
+        [[ ${comps[i]} == ${home_comps[i]} ]] || { under_home=0; break }
+      done
+    fi
+
+    local start marker
+    if (( under_home )); then
+      start=$(( home_n + 1 )); marker='~'
+    else
+      start=1; marker=''
+    fi
+
+    # Explicit colors on every token. Avoid bare %f: in a prompt it resets the
+    # foreground to the terminal default, not to this segment's fg, which would
+    # leave the in-repo dirs the wrong color. %b only turns bold off.
+    local norm='%F{254}' dim='%F{250}' root_open='%B%F{161}' bold_off='%b'
+    local content='' name parent role is_leaf tok
+    [[ -n $marker ]] && content="${dim}${marker}"
+    for (( i=start; i<=cwd_n; i++ )); do
+      name=${comps[i]}
+      parent='/'${(j:/:)comps[1,i-1]}
+      is_leaf=0; (( i == cwd_n )) && is_leaf=1
+      if   (( root_n > 0 && i <  root_n )); then role=parent
+      elif (( root_n > 0 && i == root_n )); then role=root
+      elif (( root_n > 0 ));               then role=inrepo
+      else                                      role=norepo
+      fi
+      case $role in
+        parent) _reporoot_abbrev $parent $name; tok="${dim}${REPLY//\%/%%}" ;;
+        root)   tok="${root_open}${name//\%/%%}${bold_off}" ;;
+        inrepo) tok="${norm}${name//\%/%%}" ;;
+        norepo) if (( is_leaf )); then
+                  tok="${norm}${name//\%/%%}"
+                else
+                  _reporoot_abbrev $parent $name; tok="${dim}${REPLY//\%/%%}"
+                fi ;;
+      esac
+      # Separator in the normal color, then the token in its own color.
+      content+="${norm}/${tok}"
+    done
+
+    p10k segment -b 4 -f 254 -t "$content"
+  }
+
+  # Same segment in instant prompt (it makes one fixed `p10k segment` call).
+  function instant_prompt_reporoot_dir() { prompt_reporoot_dir }
+
+  typeset -g POWERLEVEL9K_REPOROOT_DIR_FOREGROUND=254
+  typeset -g POWERLEVEL9K_REPOROOT_DIR_BACKGROUND=4
 
   # Transient prompt works similarly to the builtin transient_rprompt option. It trims down prompt
   # when accepting a command line. Supported values:

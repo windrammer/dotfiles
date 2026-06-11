@@ -269,6 +269,22 @@ brew() {
   return $exit_code
 }
 
+# Bare `cd` inside a git repo (but not at its root) jumps to the repo root.
+# At the root, or outside a repo, it falls back to the normal `cd` (home).
+# `cd <args>` is always passed straight through.
+cd() {
+  if [[ $# -eq 0 ]]; then
+    local root
+    if root="$(command git rev-parse --show-toplevel 2>/dev/null)" && [[ "$PWD" != "$root" ]]; then
+      builtin cd "$root"
+    else
+      builtin cd
+    fi
+  else
+    builtin cd "$@"
+  fi
+}
+
 # source ~/powerlevel10k/powerlevel10k.zsh-theme
 
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
