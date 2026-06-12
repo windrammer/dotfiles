@@ -1699,13 +1699,13 @@
   # typeset -g POWERLEVEL9K_EXAMPLE_VISUAL_IDENTIFIER_EXPANSION='⭐'
 
   #################[ reporoot_dir: path with only the git repo root highlighted ]#################
-  # Custom replacement for the built-in `dir` segment. Shows the ~-relative
-  # path; directories above the git repo root are shortened to their shortest
-  # unique prefix and dimmed; the repo-root directory is bold pink (matching
-  # the Claude Code statusline); in-repo dirs and the current dir are shown in
-  # full. Only the repo root is highlighted (home ~ is not). Trade-off vs the
-  # built-in dir: no tab-completion of shortened segments and no
-  # writable/non-existent indicator.
+  # Custom replacement for the built-in `dir` segment. Shortens directories to
+  # their shortest unique prefix (p10k truncate_to_unique style), except the
+  # repo-root directory (bold pink, shown in full, matching the Claude Code
+  # statusline) and the current directory (shown in full). Dirs above the repo
+  # root are dimmed; in-repo dirs use the normal color. Only the repo root is
+  # highlighted (home ~ is not). Trade-off vs the built-in dir: no
+  # tab-completion of shortened segments and no writable/non-existent indicator.
 
   # Shortest unique prefix of dir $2 among the sibling dirs in $1; result in REPLY.
   function _reporoot_abbrev() {
@@ -1777,7 +1777,11 @@
       case $role in
         parent) _reporoot_abbrev $parent $name; tok="${dim}${REPLY//\%/%%}" ;;
         root)   tok="${root_open}${name//\%/%%}${bold_off}" ;;
-        inrepo) tok="${norm}${name//\%/%%}" ;;
+        inrepo) if (( is_leaf )); then
+                  tok="${norm}${name//\%/%%}"
+                else
+                  _reporoot_abbrev $parent $name; tok="${norm}${REPLY//\%/%%}"
+                fi ;;
         norepo) if (( is_leaf )); then
                   tok="${norm}${name//\%/%%}"
                 else
