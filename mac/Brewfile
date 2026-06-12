@@ -54,6 +54,7 @@ brew "kustomize"
 brew "kyverno"
 brew "lazygit"
 brew "lsd"
+brew "mas"
 brew "mdcat"
 brew "mimirtool"
 brew "minikube"
@@ -91,3 +92,7 @@ vscode "hashicorp.terraform"
 vscode "ms-azuretools.vscode-containers"
 vscode "ms-azuretools.vscode-docker"
 vscode "ms-vscode-remote.remote-containers"
+
+# Mac App Store apps (requires being signed into the App Store).
+# WireGuard VPN client (menu-bar app for the UniFi gateway VPN).
+mas "WireGuard", id: 1451685025
