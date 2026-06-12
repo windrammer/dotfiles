@@ -5,39 +5,6 @@
   become: no
 
   pre_tasks:
-    - name: Show sudo-requiring tasks
-      debug:
-        msg:
-          - "The following task needs sudo (and your password):"
-          - "  - Install homelab-ca root cert into System keychain (trusts woodpecker.home.arpa etc.)"
-          - ""
-          - "Answer yes on a fresh machine, or if it needs to be (re)installed."
-          - "It is idempotent — answer no on routine subsequent runs."
-
-    - name: Prompt whether to run sudo-requiring tasks
-      pause:
-        prompt: "Run sudo-requiring tasks? [y/N]"
-        echo: yes
-      register: run_sudo_prompt
-
-    - name: Resolve run_sudo_tasks fact
-      set_fact:
-        run_sudo_tasks: "{{ (run_sudo_prompt.user_input | default('') | lower) in ['y', 'yes'] }}"
-
-    - name: Prompt for sudo password
-      pause:
-        prompt: "sudo password"
-        echo: no
-      register: sudo_password_prompt
-      when: run_sudo_tasks
-      no_log: true
-
-    - name: Set ansible_become_password
-      set_fact:
-        ansible_become_password: "{{ sudo_password_prompt.user_input }}"
-      when: run_sudo_tasks
-      no_log: true
-
     - name: Check if homebrew is installed
       stat:
         path: /opt/homebrew/bin/brew
@@ -151,44 +118,6 @@
     shell: |
       /usr/libexec/PlistBuddy -c "Set :AppleSymbolicHotKeys:64:enabled false" ~/Library/Preferences/com.apple.symbolichotkeys.plist 2>/dev/null || true
     ignore_errors: yes
-
-  - name: check if homelab-ca root cert is in System keychain
-    shell: security find-certificate -c homelab-ca /Library/Keychains/System.keychain
-    register: homelab_ca_check
-    failed_when: false
-    changed_when: false
-
-  - name: install homelab-ca root cert into System keychain (trusts woodpecker.home.arpa etc.)
-    become: yes
-    shell: >
-      security add-trusted-cert -d -r trustRoot
-      -k /Library/Keychains/System.keychain
-      {{ playbook_dir }}/../certs/homelab-ca.pem
-    when: run_sudo_tasks and homelab_ca_check.rc != 0
-
-  - name: check if podman machine is reachable
-    shell: podman machine ssh -- true
-    register: podman_reachable
-    changed_when: false
-    failed_when: false
-
-  - name: check if homelab-ca is in podman machine trust anchors
-    shell: podman machine ssh -- test -f /etc/pki/ca-trust/source/anchors/homelab-ca.crt
-    register: podman_homelab_cert
-    changed_when: false
-    failed_when: false
-    when: podman_reachable.rc == 0
-
-  # Restart the rootful podman service after updating trust anchors because
-  # Go's crypto/x509 caches SystemCertPool once per process, so the long-running
-  # service won't pick up the new bundle until it's restarted.
-  - name: install homelab-ca into podman machine trust anchors (so podman push trusts registry.home.arpa)
-    shell: |
-      set -euo pipefail
-      podman machine ssh -- sudo tee /etc/pki/ca-trust/source/anchors/homelab-ca.crt < {{ playbook_dir }}/../certs/homelab-ca.pem > /dev/null
-      podman machine ssh -- sudo update-ca-trust
-      podman machine ssh -- sudo systemctl restart podman.service
-    when: podman_reachable.rc == 0 and (podman_homelab_cert.rc | default(1)) != 0
 
   - name: run link script
     shell: "{{ ansible_facts['env']['HOME'] }}/git/dotfiles/mac/link.sh"
