@@ -1,4 +1,5 @@
 {
+  "effortLevel": "xhigh",
   "permissions": {
     "allow": [
       "Bash(gh repo *)",
@@ -58,10 +59,9 @@
       "Bash(curl -I *)"
     ]
   },
-  "effortLevel": "xhigh",
-  "theme": "dark",
   "statusLine": {
-    "type": "command",
-    "command": "~/.bin/claude-statusline"
-  }
+    "command": "~/.bin/claude-statusline",
+    "type": "command"
+  },
+  "theme": "dark"
 }

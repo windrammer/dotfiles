@@ -1,0 +1,6 @@
+# Claude Code rewrites ~/.claude/settings.json at runtime and reshuffles key
+# order, which would otherwise show as a phantom diff (the file is symlinked
+# into this repo). The `claude-settings` clean filter canonicalizes key order
+# with `jq -S` so reordering is invisible to git; real value changes still
+# diff and commit normally. Filter is defined in mac/gitconfig.
+claude-settings.json filter=claude-settings

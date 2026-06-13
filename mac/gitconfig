@@ -28,3 +28,8 @@
 	defaultBranch = main
 [url "git@github.com:playgroundtech/"]
 	insteadOf = https://github.com/playgroundtech/
+
+# Canonicalize claude-settings.json key order so Claude Code's runtime
+# reshuffling doesn't show as a diff (see mac/.gitattributes).
+[filter "claude-settings"]
+	clean = jq -S .
