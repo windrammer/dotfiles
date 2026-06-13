@@ -43,6 +43,13 @@
       dest: ~/.trufflehog-global-ignore
       force: no
 
+  - name: trust third-party taps from Brewfile (required by Homebrew 6.0+)
+    shell: |
+      grep -E '^tap "' {{ ansible_facts['env']['HOME'] }}/Brewfile \
+        | sed -E 's/^tap "([^"]+)".*/\1/' \
+        | xargs -I {} brew trust --tap {}
+    changed_when: false
+
   - name: install stuff from brewfile (no upgrade to avoid breaking ansible)
     shell: brew bundle --file={{ ansible_facts['env']['HOME'] }}/Brewfile --no-upgrade
     ignore_errors: yes
