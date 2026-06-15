@@ -13,7 +13,7 @@
 - Don't introduce a new test framework or testing pattern without asking.
 ## Git
 - Do not amend or run destructive git operations. You may create commits and push, but only after I confirm the proposed commit (see below).
-- When a logical unit of work is done, give me the commit as plain text. Use `Changed files:` (repo-relative paths) then `Git commit message:` with a flush-left subject + body matching the project's existing style (conventional commits, etc.). No fenced code block, no `git commit`/HEREDOC wrapper. Mark the start and end of the commit message with a line of dashes (`---`) so it's easy to see where it begins and ends.
+- When a logical unit of work is done, give me the commit as plain text. Use `Changed files:` (repo-relative paths) then `Git commit message:` with a flush-left subject + body matching the project's existing style (conventional commits, etc.). No fenced code block, no `git commit`/HEREDOC wrapper. Mark the start and end of the commit message with a `---` line, and put a blank line before and after each `---` so it renders as a horizontal rule instead of gluing onto the subject or body.
 - Wait for my confirmation before committing or pushing. Once I confirm, you may commit and push.
 - For Conventional Commits, use the bare type (e.g. `feat: …` / `fix: …`), never a parenthesised scope like `feat(mac): …`.
 - Respect commit message line length: subject ≤ 50 chars, body wrapped at 72 chars.
