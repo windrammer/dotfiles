@@ -1,5 +1,4 @@
 {
-  "effortLevel": "xhigh",
   "permissions": {
     "allow": [
       "Bash(gh repo *)",

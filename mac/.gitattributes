@@ -1,6 +1,6 @@
-# Claude Code rewrites ~/.claude/settings.json at runtime and reshuffles key
-# order, which would otherwise show as a phantom diff (the file is symlinked
-# into this repo). The `claude-settings` clean filter canonicalizes key order
-# with `jq -S` so reordering is invisible to git; real value changes still
-# diff and commit normally. Filter is defined in mac/gitconfig.
+# Claude Code rewrites ~/.claude/settings.json at runtime: it reshuffles key
+# order and persists runtime prefs like effortLevel (set by /effort). Both
+# would otherwise churn this repo (the file is symlinked in). The
+# `claude-settings` clean filter sorts keys and drops effortLevel so those
+# don't diff; other real value changes still diff. Filter in mac/gitconfig.
 claude-settings.json filter=claude-settings
