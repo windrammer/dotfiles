@@ -4,6 +4,7 @@
 - When a request is ambiguous, list the reasonable options and let me pick rather than guessing or asking open-ended questions.
 - Show your reasoning for non-trivial changes: enough for me to follow the decision, not a full essay. For trivial edits, just do them and move on.
 - Prefer small, reviewable diffs over large batches.
+- Don't act on unvalidated assumptions. Before committing to an approach, verify the claims it hinges on: that it actually works in this environment, and that ruled-out alternatives genuinely are ruled out (not inherited assumptions). Decide on verified facts, optimizing for correctness and robustness, not cost or convenience. This matters especially in work-related matters.
 ## Verification
 - After any code edit, run the relevant tests and typecheck/lint. Report results before considering the task done.
 - If tests fail, fix the cause rather than the symptom. Don't disable or skip tests to make them pass.
