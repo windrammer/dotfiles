@@ -35,6 +35,8 @@
 - `set -euo pipefail` at the top of every script.
 - Quote variables. Use `[[ ]]` not `[ ]`. Prefer `$(...)` over backticks.
 - Run `shellcheck` on any script you write or modify.
+- When running multi-statement Bash commands, put each `;`-separated statement on its own line so the command is easy to read.
+- When editing files, use and refer to the full path (e.g. `pulumi/ci/pulumi-ci.yml`), not just the bare filename.
 ## Tooling preferences
 - Use `rg` (ripgrep) instead of `grep` for searching.
 - Use `fd` instead of `find` when available.
