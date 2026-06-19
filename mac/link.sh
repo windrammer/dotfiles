@@ -90,5 +90,15 @@ print(p["Guid"])
   if [[ -n "$ITERM_GUID" ]]; then
     defaults write com.googlecode.iterm2 "Default Bookmark Guid" "$ITERM_GUID"
     echo "iTerm profile installed (guid $ITERM_GUID). Restart iTerm to apply."
+    # iTerm ignores a dynamic profile whose Guid matches a regular (imported)
+    # profile. Warn if a leftover import shadows it so it can be deleted once.
+    if defaults read com.googlecode.iterm2 "New Bookmarks" 2>/dev/null | grep -q "$ITERM_GUID"; then
+      echo "⚠️  A regular iTerm profile shares this GUID and will shadow the dynamic one."
+      echo "    Delete it once: iTerm > Settings > Profiles > 'iterm profile from dotfiles' > [-]."
+    fi
   fi
 fi
+
+# Link iTerm profile sync helper (pulls GUI edits back into the repo)
+chmod +x "$DOTFILES_DIR/bin/iterm-sync"
+ln -sf "$DOTFILES_DIR/bin/iterm-sync" ~/.bin/iterm-sync

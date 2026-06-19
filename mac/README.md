@@ -49,11 +49,17 @@ plutil -convert xml1 ~/Library/Preferences/com.knollsoft.Rectangle.plist -o ~/gi
 ```
 
 ### iTerm2 Configuration
-To export the current iTerm2 profile:
+The profile in `iterm profile from dotfiles.json` is installed automatically by
+`link.sh` as an iTerm2 [Dynamic Profile](https://iterm2.com/documentation-dynamic-profiles.html)
+(wrapped and dropped into `~/Library/Application Support/iTerm2/DynamicProfiles/`).
+Do not import it manually: a manual import creates a regular profile with the
+same GUID, and iTerm then ignores the dynamic profile in its favour (this is the
+"conflicting profiles" warning).
+
+Because the profile sets `"Rewritable": true`, you can edit it normally in
+iTerm > Settings > Profiles. To save those edits back into the repo:
 ```bash
-# Get the profile name (usually "Default" or your custom profile name)
-# Then export it to JSON:
-plutil -convert json -o ~/git/dotfiles/mac/iterm-profile-from-dotfiles.json ~/Library/Preferences/com.googlecode.iterm2.plist
-# Or use iTerm2's built-in export: Preferences > Profiles > Other Actions > Save Profile as JSON
+iterm-sync                 # pull live edits into "iterm profile from dotfiles.json"
+git diff -- "iterm profile from dotfiles.json"   # review, then commit
 ```
 

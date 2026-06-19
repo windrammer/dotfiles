@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+#
+# iterm-sync — Pull iTerm2 GUI edits to the dotfiles profile back into the repo.
+#
+# link.sh installs "iterm profile from dotfiles.json" as an iTerm2 Dynamic
+# Profile at ~/Library/Application Support/iTerm2/DynamicProfiles/dotfiles.json.
+# Because the profile sets "Rewritable": true, iTerm writes any edits you make
+# in Settings > Profiles back to that live file. This script unwraps that file
+# (iTerm stores it as {"Profiles": [<profile>]}) and writes the single profile
+# back to the repo's source-of-truth JSON, so you can review and commit it.
+#
+# Usage: iterm-sync
+set -euo pipefail
+
+DOTFILES_DIR="$HOME/git/dotfiles/mac"
+REPO_PROFILE="$DOTFILES_DIR/iterm profile from dotfiles.json"
+DYNAMIC_PROFILE="$HOME/Library/Application Support/iTerm2/DynamicProfiles/dotfiles.json"
+
+if [[ ! -f "$DYNAMIC_PROFILE" ]]; then
+  echo "No dynamic profile at: $DYNAMIC_PROFILE" >&2
+  echo "Run link.sh first to install it." >&2
+  exit 1
+fi
+
+guid=$(python3 - "$DYNAMIC_PROFILE" "$REPO_PROFILE" <<'PY'
+import json
+import sys
+
+src, dst = sys.argv[1], sys.argv[2]
+profiles = json.load(open(src)).get("Profiles", [])
+if not profiles:
+    sys.exit("dynamic profile file has no Profiles array")
+profile = profiles[0]
+with open(dst, "w") as fh:
+    json.dump(profile, fh, indent=2, sort_keys=True)
+    fh.write("\n")
+print(profile.get("Guid", "?"))
+PY
+)
+
+echo "Synced iTerm profile (guid ${guid}) -> ${REPO_PROFILE}"
+echo "Review: git -C \"${DOTFILES_DIR}\" diff -- \"iterm profile from dotfiles.json\""
