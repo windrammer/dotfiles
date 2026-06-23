@@ -5,6 +5,39 @@
   become: no
 
   pre_tasks:
+    - name: Show sudo-requiring tasks
+      debug:
+        msg:
+          - "The following task needs sudo (and your password):"
+          - "  - Install /etc/resolver/toll.is (routes *.toll.is to the homelab Pi-hole over WireGuard)"
+          - ""
+          - "Answer yes on a fresh machine, or if it needs to be (re)installed."
+          - "It is idempotent; answer no on routine subsequent runs."
+
+    - name: Prompt whether to run sudo-requiring tasks
+      pause:
+        prompt: "Run sudo-requiring tasks? [y/N]"
+        echo: yes
+      register: run_sudo_prompt
+
+    - name: Resolve run_sudo_tasks fact
+      set_fact:
+        run_sudo_tasks: "{{ (run_sudo_prompt.user_input | default('') | lower) in ['y', 'yes'] }}"
+
+    - name: Prompt for sudo password
+      pause:
+        prompt: "sudo password"
+        echo: no
+      register: sudo_password_prompt
+      when: run_sudo_tasks
+      no_log: true
+
+    - name: Set ansible_become_password
+      set_fact:
+        ansible_become_password: "{{ sudo_password_prompt.user_input }}"
+      when: run_sudo_tasks
+      no_log: true
+
     - name: Check if homebrew is installed
       stat:
         path: /opt/homebrew/bin/brew
@@ -125,6 +158,25 @@
     shell: |
       /usr/libexec/PlistBuddy -c "Set :AppleSymbolicHotKeys:64:enabled false" ~/Library/Preferences/com.apple.symbolichotkeys.plist 2>/dev/null || true
     ignore_errors: yes
+
+  # Per-domain resolver so *.toll.is resolves via the homelab Pi-hole over the
+  # WireGuard tunnel. Needs root (/etc/resolver is root-owned); gated behind the
+  # sudo prompt in pre_tasks (run_sudo_tasks).
+  - name: ensure /etc/resolver exists
+    become: yes
+    file:
+      path: /etc/resolver
+      state: directory
+      mode: "0755"
+    when: run_sudo_tasks
+
+  - name: route toll.is DNS to homelab Pi-hole (via WireGuard)
+    become: yes
+    copy:
+      content: "nameserver 192.168.50.53\n"
+      dest: /etc/resolver/toll.is
+      mode: "0644"
+    when: run_sudo_tasks
 
   - name: run link script
     shell: "{{ ansible_facts['env']['HOME'] }}/git/dotfiles/mac/link.sh"
